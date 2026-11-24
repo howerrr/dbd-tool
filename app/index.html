@@ -29,8 +29,199 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="迷雾" />
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- ============================================================
+         首屏加载态（DBD 风格的「对局载入」）
+         —— 全部内联，不依赖任何外部请求，所以它在 HTML 一到就出现：
+            JS/CSS 还没下载完、owners.json 还没回来时，用户看到的是这段动画，
+           而不是白屏（html 底色也在这里先铺成深色，避免白闪）。
+            数据到齐后由 src/lib/splash.ts 给 #splash 加 .is-gone 淡出并移除。
+
+         结构：漂移的雾（两层径向渐变各自反向缓动，重叠处像雾在流动）
+             + 断魂钩（血色的钩子，静止不动）
+             + 绕着钩子转的血色弧环（两条 border 着色，rotate 驱动）
+             + 标题（黎明杀机 / DEAD BY DAYLIGHT，字距用 text-indent 抵消
+               字距带来的尾部空隙，否则居中会偏右）
+             + 不定长进度条（一条亮血色的光带走到底，表示「在等，但不知道还要多久」）。
+         所有动画只用 transform / opacity，iOS Safari 上没有滤镜兼容问题。
+         ============================================================ -->
+    <style>
+      html {
+        background: #060608;
+      }
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 22px;
+        background: #060608;
+        transition: opacity 0.32s ease;
+      }
+      #splash.is-gone {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .sp-fog {
+        position: absolute;
+        inset: -20%;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse 34% 26% at 30% 40%, rgba(179, 32, 32, 0.17), transparent 70%),
+          radial-gradient(ellipse 30% 22% at 72% 62%, rgba(232, 226, 214, 0.06), transparent 70%);
+        animation: sp-fog-a 26s ease-in-out infinite alternate;
+      }
+      .sp-fog::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 40% 30% at 62% 34%, rgba(179, 32, 32, 0.14), transparent 72%),
+          radial-gradient(ellipse 26% 20% at 26% 70%, rgba(232, 226, 214, 0.05), transparent 72%);
+        animation: sp-fog-b 34s ease-in-out infinite alternate;
+      }
+      @keyframes sp-fog-a {
+        from {
+          transform: translate3d(-3%, 2%, 0) scale(1);
+        }
+        to {
+          transform: translate3d(3%, -2%, 0) scale(1.08);
+        }
+      }
+      @keyframes sp-fog-b {
+        from {
+          transform: translate3d(2%, -3%, 0) scale(1.06);
+        }
+        to {
+          transform: translate3d(-2%, 3%, 0) scale(1);
+        }
+      }
+
+      .sp-mark {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 58px;
+        height: 58px;
+      }
+      .sp-hook {
+        width: 22px;
+        height: 22px;
+        stroke: #b32020;
+        fill: none;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .sp-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2px solid rgba(179, 32, 32, 0.16);
+        border-top-color: #b32020;
+        border-right-color: rgba(179, 32, 32, 0.55);
+        box-shadow:
+          0 0 22px rgba(179, 32, 32, 0.28),
+          inset 0 0 14px rgba(179, 32, 32, 0.12);
+        animation: sp-spin 1.05s linear infinite;
+      }
+      .sp-ring::after {
+        content: '';
+        position: absolute;
+        inset: 9px;
+        border-radius: 50%;
+        border: 1px solid rgba(232, 226, 214, 0.09);
+        border-bottom-color: rgba(179, 32, 32, 0.5);
+        animation: sp-spin 1.7s linear infinite reverse;
+      }
+      @keyframes sp-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .sp-logo {
+        display: grid;
+        justify-items: center;
+        gap: 8px;
+      }
+      .sp-logo b {
+        font-family: 'Noto Serif SC', 'Songti SC', 'Source Han Serif SC', Georgia, serif;
+        font-size: 21px;
+        font-weight: 600;
+        letter-spacing: 0.3em;
+        text-indent: 0.3em;
+        color: #e8e2d6;
+      }
+      .sp-logo i {
+        font-style: normal;
+        font-size: 8.5px;
+        font-weight: 600;
+        letter-spacing: 0.34em;
+        text-indent: 0.34em;
+        color: #b32020;
+        opacity: 0.85;
+      }
+
+      .sp-bar {
+        position: relative;
+        width: 168px;
+        height: 2px;
+        overflow: hidden;
+        border-radius: 2px;
+        background: rgba(232, 226, 214, 0.09);
+      }
+      .sp-bar span {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 42%;
+        background: linear-gradient(90deg, transparent, #b32020 45%, #ff6b57, transparent);
+        box-shadow: 0 0 10px rgba(179, 32, 32, 0.6);
+        animation: sp-sweep 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes sp-sweep {
+        from {
+          transform: translateX(-110%);
+        }
+        to {
+          transform: translateX(260%);
+        }
+      }
+
+      /* 系统开了「减少动效」就停掉所有动画，只留静态的画面 */
+      @media (prefers-reduced-motion: reduce) {
+        #splash *,
+        #splash *::after {
+          animation: none !important;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="splash" role="status" aria-live="polite" aria-label="正在载入">
+      <div class="sp-fog"></div>
+      <div class="sp-mark">
+        <svg class="sp-hook" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M13 3.5v10.5c0 5.5-5.5 5.5-5.5 0.5" />
+          <path d="M13 3.5h2.4" />
+        </svg>
+        <span class="sp-ring"></span>
+      </div>
+      <div class="sp-logo">
+        <b>黎明杀机</b>
+        <i>DEAD BY DAYLIGHT</i>
+      </div>
+      <div class="sp-bar"><span></span></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -10,6 +10,7 @@ import { TabBar, TopBar } from '../components/TopBar';
 import { loadAddonIndex, loadAddons, loadOwners, loadPerks } from '../data/api';
 import { rarityStyle } from '../lib/rarity';
 import { matchesAllTerms, matchesQuery, normText } from '../lib/search';
+import { hideSplash } from '../lib/splash';
 import type { AddonIndexEntry, Entry, Owner, OwnersFile, Rarity, Side } from '../types';
 import { RARITY_LABEL, SIDE_LABEL, isSide } from '../types';
 
@@ -117,6 +118,16 @@ export default function Browse() {
       alive = false;
     };
   }, []);
+
+  /**
+   * 首屏那段雾里的加载动画（`index.html` 里的 `#splash`）在这里退场。
+   * 判据是「第一份数据到齐」而不是「React 挂载」——
+   * 挂载时页面上还只有「正在雾中摸索…」一行字，让动画多撑一会儿更连贯；
+   * 出错也要退场，否则用户会被永远挡在加载动画后面看不到错误信息。
+   */
+  useEffect(() => {
+    if (ownersFile || ownersError) hideSplash();
+  }, [ownersFile, ownersError]);
 
   const owners = useMemo(
     () => ownersFile?.owners.filter((o) => o.side === side) ?? [],
