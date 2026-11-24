@@ -188,6 +188,16 @@ export default function Browse() {
     if (ownerId && owner) writeLast(side, ownerId);
   }, [ownerId, owner, side]);
 
+  /**
+   * 阵营主题色：把 data-side 写到 <html> 上。
+   * tokens.css 里 `html[data-side='survivor']` 会把整套强调色换成雾蓝，
+   * 自定义属性向下继承，所以 .app、body 那层「面板背后的反光」、抽屉都跟着换。
+   * 写在 <html> 而不是 .app 上，是因为 body 的径向渐变也得吃到这套变量。
+   */
+  useEffect(() => {
+    document.documentElement.dataset.side = side;
+  }, [side]);
+
   /* ---------- 路由变化：关抽屉、关搜索、复位或恢复滚动位置 ---------- */
   const lastSide = useRef<Side>(side);
   /** 打开搜索前的主区滚动位置（关闭搜索后还原） */
@@ -480,19 +490,24 @@ export default function Browse() {
 
   const isEmpty = drilled && !contentLoading && ownerPerks.length === 0 && addons.length === 0;
 
+  /**
+   * 搜索框提示词。
+   * 角色页要带上角色名（「搜设陷者的技能、配件或效果」），比「这个角色」更有针对性；
+   * 角色数据还没到 / 非法 id 时退回「这个角色」。
+   */
+  const searchPlaceholder = useMemo(() => {
+    if (!drilled) {
+      return side === 'killer' ? '搜角色、技能、配件或效果' : '搜角色、技能或效果';
+    }
+    const who = owner?.name ?? '这个角色';
+    return side === 'killer' ? `搜${who}的技能、配件或效果` : `搜${who}的技能或效果`;
+  }, [drilled, owner, side]);
+
   return (
     <div className="app" data-sheet={sheetEntry ? 'open' : 'closed'}>
       {searchOpen ? (
         <SearchBar
-          placeholder={
-            drilled
-              ? side === 'killer'
-                ? '搜这个角色的技能、配件或效果'
-                : '搜这个角色的技能或效果'
-              : side === 'killer'
-                ? '搜角色、技能、配件或效果'
-                : '搜角色、技能或效果'
-          }
+          placeholder={searchPlaceholder}
           chips={availableChips}
           activeChips={activeChips}
           onToggleChip={(term) =>

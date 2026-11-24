@@ -43,7 +43,8 @@ interface TabBarProps {
 
 export function TabBar({ side, onChange }: TabBarProps) {
   return (
-    <nav className="tabbar" aria-label="主导航">
+    /* data-side 驱动那条滑动指示条停在哪一半（桌面端是滑动的药丸底色） */
+    <nav className="tabbar" data-side={side} aria-label="主导航">
       <button
         className="tab"
         aria-selected={side === 'killer'}
