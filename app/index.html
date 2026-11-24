@@ -31,19 +31,19 @@
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- ============================================================
-         首屏加载态（DBD 风格的「对局载入」）
+         首屏加载态（DBD 对局载入的观感）
          —— 全部内联，不依赖任何外部请求，所以它在 HTML 一到就出现：
             JS/CSS 还没下载完、owners.json 还没回来时，用户看到的是这段动画，
-           而不是白屏（html 底色也在这里先铺成深色，避免白闪）。
+            而不是白屏（html 底色也在这里先铺成深色，避免白闪）。
             数据到齐后由 src/lib/splash.ts 给 #splash 加 .is-gone 淡出并移除。
 
-         结构：漂移的雾（两层径向渐变各自反向缓动，重叠处像雾在流动）
-             + 断魂钩（血色的钩子，静止不动）
-             + 绕着钩子转的血色弧环（两条 border 着色，rotate 驱动）
-             + 标题（黎明杀机 / DEAD BY DAYLIGHT，字距用 text-indent 抵消
-               字距带来的尾部空隙，否则居中会偏右）
-             + 不定长进度条（一条亮血色的光带走到底，表示「在等，但不知道还要多久」）。
-         所有动画只用 transform / opacity，iOS Safari 上没有滤镜兼容问题。
+         主体是 DBD 那个「计数划痕」标记：四条竖线 + 一条斜线。
+         五条依次被「划」上去 —— stroke-dashoffset 从 1 收到 0，笔画沿着
+         自己的走向生长（竖线由下往上，斜线由左下往右上）；
+         划完短暂停留 → 整组淡出 → 从第一条重新开始。
+         背后是两层各自漂移的雾（径向渐变 + transform 缓动），下面配标题。
+         动画只用 transform / opacity / stroke-dashoffset，不用任何滤镜 ——
+         iOS Safari 上滤镜会渲染异常。
          ============================================================ -->
     <style>
       html {
@@ -56,7 +56,7 @@
         display: grid;
         place-content: center;
         justify-items: center;
-        gap: 22px;
+        gap: 20px;
         background: #060608;
         transition: opacity 0.32s ease;
       }
@@ -69,6 +69,7 @@
         z-index: 1;
       }
 
+      /* ---------- 雾：两层反向缓动，重叠处看着像雾在流动 ---------- */
       .sp-fog {
         position: absolute;
         inset: -20%;
@@ -105,49 +106,126 @@
         }
       }
 
-      .sp-mark {
-        position: relative;
-        display: grid;
-        place-items: center;
-        width: 58px;
-        height: 58px;
+      /* ---------- 计数划痕：四条竖线 + 一条斜线 ----------
+         viewBox 84×56：竖线 x = 18 / 34 / 50 / 66、y 10→46（向上生长）；
+         斜线从左下 (8,50) 划到右上 (76,6)，横穿四根竖线。
+         每条 path 上都写了 pathLength="1"，把自身长度归一化 ——
+         这样 dasharray / dashoffset 统一用 1 就够了，五条线的「生长速度」
+         与长短无关，不会出现斜线先画完、竖线还在半路的情况。 */
+      .sp-tally {
+        width: 104px;
+        height: 70px;
+        overflow: visible;
+        /* 划完 → 停留 → 整体淡出 → 回到起点重画，所以淡出挂在整组上 */
+        animation: sp-tally-cycle 2.4s linear infinite both;
       }
-      .sp-hook {
-        width: 22px;
-        height: 22px;
-        stroke: #b32020;
+      .sp-tally path {
         fill: none;
-        stroke-width: 1.7;
-        stroke-linecap: round;
-        stroke-linejoin: round;
+        stroke: #c22a2a;
+        stroke-width: 5.5;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation-duration: 2.4s;
+        animation-timing-function: cubic-bezier(0.32, 0.06, 0.28, 1);
+        animation-iteration-count: infinite;
+        animation-fill-mode: both;
       }
-      .sp-ring {
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        border: 2px solid rgba(179, 32, 32, 0.16);
-        border-top-color: #b32020;
-        border-right-color: rgba(179, 32, 32, 0.55);
-        box-shadow:
-          0 0 22px rgba(179, 32, 32, 0.28),
-          inset 0 0 14px rgba(179, 32, 32, 0.12);
-        animation: sp-spin 1.05s linear infinite;
+      .sp-tally path:nth-child(1) {
+        animation-name: sp-line-1;
       }
-      .sp-ring::after {
-        content: '';
-        position: absolute;
-        inset: 9px;
-        border-radius: 50%;
-        border: 1px solid rgba(232, 226, 214, 0.09);
-        border-bottom-color: rgba(179, 32, 32, 0.5);
-        animation: sp-spin 1.7s linear infinite reverse;
+      .sp-tally path:nth-child(2) {
+        animation-name: sp-line-2;
       }
-      @keyframes sp-spin {
-        to {
-          transform: rotate(360deg);
+      .sp-tally path:nth-child(3) {
+        animation-name: sp-line-3;
+      }
+      .sp-tally path:nth-child(4) {
+        animation-name: sp-line-4;
+      }
+      .sp-tally path:nth-child(5) {
+        animation-name: sp-line-5;
+      }
+      /* 五条各自的时间窗（都按 2.4s 一轮算）：
+         0→13 / 8→21 / 16→29 / 24→37 / 32→45 %；
+         每条划 0.31s、彼此错开 0.19s，所以看到的是「一笔接一笔」。
+         45% 之后全部保持画好，94% 之后整组已经淡出，100% 复位重来。 */
+      @keyframes sp-line-1 {
+        0% {
+          stroke-dashoffset: 1;
+        }
+        13%,
+        94% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: 1;
+        }
+      }
+      @keyframes sp-line-2 {
+        0%,
+        8% {
+          stroke-dashoffset: 1;
+        }
+        21%,
+        94% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: 1;
+        }
+      }
+      @keyframes sp-line-3 {
+        0%,
+        16% {
+          stroke-dashoffset: 1;
+        }
+        29%,
+        94% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: 1;
+        }
+      }
+      @keyframes sp-line-4 {
+        0%,
+        24% {
+          stroke-dashoffset: 1;
+        }
+        37%,
+        94% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: 1;
+        }
+      }
+      @keyframes sp-line-5 {
+        0%,
+        32% {
+          stroke-dashoffset: 1;
+        }
+        45%,
+        94% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: 1;
+        }
+      }
+      @keyframes sp-tally-cycle {
+        0%,
+        86% {
+          opacity: 1;
+        }
+        93%,
+        100% {
+          opacity: 0;
         }
       }
 
+      /* ---------- 标题 ----------
+         字距用 text-indent 抵掉尾部多出来的那点空隙，否则居中会偏右半个字距 */
       .sp-logo {
         display: grid;
         justify-items: center;
@@ -171,37 +249,18 @@
         opacity: 0.85;
       }
 
-      .sp-bar {
-        position: relative;
-        width: 168px;
-        height: 2px;
-        overflow: hidden;
-        border-radius: 2px;
-        background: rgba(232, 226, 214, 0.09);
-      }
-      .sp-bar span {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 42%;
-        background: linear-gradient(90deg, transparent, #b32020 45%, #ff6b57, transparent);
-        box-shadow: 0 0 10px rgba(179, 32, 32, 0.6);
-        animation: sp-sweep 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-      }
-      @keyframes sp-sweep {
-        from {
-          transform: translateX(-110%);
-        }
-        to {
-          transform: translateX(260%);
-        }
-      }
-
-      /* 系统开了「减少动效」就停掉所有动画，只留静态的画面 */
+      /* 系统开了「减少动效」：动画全停，但标记要**直接画满** ——
+         否则停在 dashoffset: 1 上就什么都看不见了 */
       @media (prefers-reduced-motion: reduce) {
         #splash *,
         #splash *::after {
           animation: none !important;
+        }
+        .sp-tally {
+          opacity: 1 !important;
+        }
+        .sp-tally path {
+          stroke-dashoffset: 0 !important;
         }
       }
     </style>
@@ -209,18 +268,17 @@
   <body>
     <div id="splash" role="status" aria-live="polite" aria-label="正在载入">
       <div class="sp-fog"></div>
-      <div class="sp-mark">
-        <svg class="sp-hook" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M13 3.5v10.5c0 5.5-5.5 5.5-5.5 0.5" />
-          <path d="M13 3.5h2.4" />
-        </svg>
-        <span class="sp-ring"></span>
-      </div>
+      <svg class="sp-tally" viewBox="0 0 84 56" aria-hidden="true">
+        <path d="M18 46V10" pathLength="1" />
+        <path d="M34 46V10" pathLength="1" />
+        <path d="M50 46V10" pathLength="1" />
+        <path d="M66 46V10" pathLength="1" />
+        <path d="M8 50L76 6" pathLength="1" />
+      </svg>
       <div class="sp-logo">
         <b>黎明杀机</b>
         <i>DEAD BY DAYLIGHT</i>
       </div>
-      <div class="sp-bar"><span></span></div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
