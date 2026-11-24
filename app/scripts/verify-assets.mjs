@@ -122,22 +122,15 @@ console.log('\n[3] 图片格式');
   else ok('站点图标齐全（favicon / apple-touch-icon / manifest 三档）');
 }
 
-/* ---------- 3b. 人像的响应式变体 ---------- */
-console.log('\n[3b] 人像响应式变体（96w / 144w / 180w）');
+/* ---------- 3b. 人像只能有母版 ---------- */
+console.log('\n[3b] 人像文件');
 {
-  // srcset 里的每一档都必须有真实文件，少一个就是 404 白图
-  const chars = distFiles.filter((f) => web(f).includes('/icons/chars/') && !/@\d+\.webp$/.test(f));
-  const SUFFIXES = ['@96.webp', '@144.webp', '@180.webp'];
-  const missing = [];
-  for (const f of chars) {
-    const stem = f.replace(/\.webp$/, '');
-    for (const suffix of SUFFIXES) {
-      if (!fs.existsSync(stem + suffix)) missing.push(rel(stem + suffix));
-    }
-  }
-  if (missing.length)
-    bad(`${missing.length} 个变体缺失（跑 npm run gen:portrait-sizes）：${missing.slice(0, 4).join(', ')}`);
-  else ok(`${chars.length} 张母版都有 ${SUFFIXES.map((s) => s.replace('.webp', '')).join(' / ')} 三档`);
+  // 响应式变体（@96/@144/@180）试过，显示效果偏软，已整套回退；
+  // 这里守住「不许再出现带尺寸后缀的变体」，否则会白占体积又没人引用。
+  const variants = distFiles.filter((f) => web(f).includes('/icons/chars/') && /@\d+\.webp$/.test(f));
+  const masters = distFiles.filter((f) => web(f).includes('/icons/chars/') && !/@\d+\.webp$/.test(f));
+  if (variants.length) bad(`有 ${variants.length} 个残留的尺寸变体（应只用 200px 母版）：${variants.slice(0, 4).map(rel).join(', ')}`);
+  else ok(`人像 ${masters.length} 张，全部是 200px 母版，无冗余变体`);
 }
 
 /* ---------- 4. 数据自洽 ---------- */

@@ -9,7 +9,6 @@ import { Section } from '../components/Section';
 import { TabBar, TopBar } from '../components/TopBar';
 import { loadAddonIndex, loadAddons, loadOwners, loadPerks } from '../data/api';
 import { rarityStyle } from '../lib/rarity';
-import { avatarSrcSet } from '../lib/base';
 import { matchesAllTerms, matchesQuery, normText } from '../lib/search';
 import type { AddonIndexEntry, Entry, Owner, OwnersFile, Rarity, Side } from '../types';
 import { RARITY_LABEL, SIDE_LABEL, isSide } from '../types';
@@ -567,15 +566,7 @@ export default function Browse() {
                       {o.id === 'universal' ? (
                         <UniversalMark side={o.side} />
                       ) : o.avatar ? (
-                        /* 搜索结果里的缩略人像只有 38px 宽，同样按 DPR 挑档 */
-                        <img
-                          src={o.avatar}
-                          srcSet={avatarSrcSet(o.avatar)}
-                          sizes="48px"
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                        />
+                        <img src={o.avatar} alt="" loading="lazy" decoding="async" />
                       ) : (
                         <span className="char__ph" aria-hidden="true">
                           {o.name.slice(0, 1)}
