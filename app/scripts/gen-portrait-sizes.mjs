@@ -27,7 +27,16 @@ import sharp from 'sharp';
 const DIR = path.resolve('public/icons/chars');
 
 /** [后缀, 边长, 编码参数] */
+/**
+ * [后缀, 边长, 编码参数]
+ *
+ * @180 用 q92 而不是 nearLossless：实测 nearLossless 要到 18.9KB/张
+ * （iPhone 首屏 754KB，相对 963KB 只省 22%，没有意义）；
+ * q92 是 12.6KB/张（首屏 502KB），采样率 95%，最大色差 52 —— 在这个采样率下可接受。
+ * 如果真机上看出边缘发糊，把这档换成 nearLossless 即可（流量回到 754KB）。
+ */
 const VARIANTS = [
+  ['@180', 180, { quality: 92, alphaQuality: 100, effort: 6 }],
   ['@144', 144, { quality: 88, alphaQuality: 100, effort: 6 }],
   ['@96', 96, { quality: 82, alphaQuality: 100, effort: 6 }],
 ];

@@ -123,19 +123,21 @@ console.log('\n[3] 图片格式');
 }
 
 /* ---------- 3b. 人像的响应式变体 ---------- */
-console.log('\n[3b] 人像响应式变体（96w / 144w）');
+console.log('\n[3b] 人像响应式变体（96w / 144w / 180w）');
 {
   // srcset 里的每一档都必须有真实文件，少一个就是 404 白图
   const chars = distFiles.filter((f) => web(f).includes('/icons/chars/') && !/@\d+\.webp$/.test(f));
+  const SUFFIXES = ['@96.webp', '@144.webp', '@180.webp'];
   const missing = [];
   for (const f of chars) {
     const stem = f.replace(/\.webp$/, '');
-    for (const suffix of ['@96.webp', '@144.webp']) {
+    for (const suffix of SUFFIXES) {
       if (!fs.existsSync(stem + suffix)) missing.push(rel(stem + suffix));
     }
   }
-  if (missing.length) bad(`${missing.length} 个变体缺失（跑 npm run gen:portrait-sizes）：${missing.slice(0, 4).join(', ')}`);
-  else ok(`${chars.length} 张母版都有 @96 / @144 两档`);
+  if (missing.length)
+    bad(`${missing.length} 个变体缺失（跑 npm run gen:portrait-sizes）：${missing.slice(0, 4).join(', ')}`);
+  else ok(`${chars.length} 张母版都有 ${SUFFIXES.map((s) => s.replace('.webp', '')).join(' / ')} 三档`);
 }
 
 /* ---------- 4. 数据自洽 ---------- */
