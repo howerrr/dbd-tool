@@ -115,14 +115,18 @@
       }
 
       /* ---------- 计数划痕：四条竖线 + 一条斜线 ----------
-         viewBox 84×56：竖线 x = 18 / 34 / 50 / 66、y 10→46（向上生长）；
-         斜线从左下 (8,50) 划到右上 (76,6)，横穿四根竖线。
+         按游戏那个标记的比例来（四条竖血痕 = 四个逃生者，一条斜痕 = 屠夫）：
+         竖线又窄又高、间距紧（间距≈线宽，看起来是一组血痕而不是四根柱子），
+         斜线以浅角度横穿四条（约 25°，两端各探出一截），并且最后才划。
+         viewBox 100×60：竖线 x = 21 / 37 / 53 / 69、y 52→12（向上生长，高 40），
+         线宽 8（高宽比 5:1，和「血痕」观感一致），相邻间距 16 = 线宽的两倍；
+         斜线从左下 (6,50) 划到右上 (84,14)，横穿四条竖线。
          每条 path 上都写了 pathLength="1"，把自身长度归一化 ——
          这样 dasharray / dashoffset 统一用 1 就够了，五条线的「生长速度」
          与长短无关，不会出现斜线先画完、竖线还在半路的情况。 */
       .sp-tally {
-        width: 120px;
-        height: 80px;
+        width: 125px;
+        height: 75px;
         overflow: visible;
         /* 划完 → 停留 → 整体淡出 → 回到起点重画，所以淡出挂在整组上 */
         animation: sp-tally-cycle 2.4s linear infinite both;
@@ -130,7 +134,8 @@
       .sp-tally path {
         fill: none;
         stroke: #e8e2d6;
-        stroke-width: 5.5;
+        stroke-width: 8;
+        stroke-linecap: butt;
         stroke-dasharray: 1;
         stroke-dashoffset: 1;
         animation-duration: 2.4s;
@@ -251,12 +256,12 @@
   <body>
     <div id="splash" role="status" aria-live="polite" aria-label="正在载入">
       <div class="sp-fog"></div>
-      <svg class="sp-tally" viewBox="0 0 84 56" aria-hidden="true">
-        <path d="M18 46V10" pathLength="1" />
-        <path d="M34 46V10" pathLength="1" />
-        <path d="M50 46V10" pathLength="1" />
-        <path d="M66 46V10" pathLength="1" />
-        <path d="M8 50L76 6" pathLength="1" />
+      <svg class="sp-tally" viewBox="0 0 100 60" aria-hidden="true">
+        <path d="M21 52V12" pathLength="1" />
+        <path d="M37 52V12" pathLength="1" />
+        <path d="M53 52V12" pathLength="1" />
+        <path d="M69 52V12" pathLength="1" />
+        <path d="M6 50L84 14" pathLength="1" />
       </svg>
     </div>
     <div id="root"></div>
