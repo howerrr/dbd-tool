@@ -124,6 +124,16 @@ export default function Browse() {
     [ownersFile, side],
   );
 
+  /**
+   * 顶栏显示的角色数。
+   * 「通用」是一个 id 为 universal 的伪角色（承载通用技能/配件），
+   * 它会出现在角色网格里，但**不该计入角色数** —— 否则杀手 45、人类 54 会各多算一个。
+   */
+  const ownerCount = useMemo(
+    () => owners.filter((o) => o.id !== 'universal').length,
+    [owners],
+  );
+
   const owner: Owner | null = useMemo(
     () => (ownerId ? (owners.find((o) => o.id === ownerId) ?? null) : null),
     [owners, ownerId],
@@ -505,7 +515,7 @@ export default function Browse() {
           side={side}
           ownerName={owner?.name ?? null}
           ownerNameEn={owner?.nameEn ?? null}
-          ownerCount={owners.length}
+          ownerCount={ownerCount}
           onBack={goBack}
           onSearch={() => {
             // 用户主动点搜索 → 一定聚焦，准备输入

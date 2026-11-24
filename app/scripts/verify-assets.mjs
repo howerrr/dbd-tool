@@ -146,9 +146,12 @@ console.log('\n[4] 数据一致性');
   const survivor = JSON.parse(fs.readFileSync(path.join(DIST, 'data/perks/survivor.json'), 'utf8'));
   const index = JSON.parse(fs.readFileSync(path.join(DIST, 'data/addons-index.json'), 'utf8'));
 
-  const killerN = owners.owners.filter((o) => o.side === 'killer');
-  const survivorN = owners.owners.filter((o) => o.side === 'survivor');
-  ok(`角色 ${owners.owners.length}（杀手 ${killerN.length} / 人类 ${survivorN.length}）`);
+  /* 「通用」是 id 为 universal 的伪角色（承载通用技能/配件），
+     它出现在角色网格里，但不该算进角色数 —— 顶栏显示的就是这个口径。 */
+  const realK = owners.owners.filter((o) => o.side === 'killer' && o.id !== 'universal').length;
+  const realS = owners.owners.filter((o) => o.side === 'survivor' && o.id !== 'universal').length;
+  const universalN = owners.owners.filter((o) => o.id === 'universal').length;
+  ok(`角色 ${realK + realS}（杀手 ${realK} / 人类 ${realS}），另有 ${universalN} 个「通用」伪条目`);
   ok(`技能 ${killer.length + survivor.length}（杀手 ${killer.length} / 人类 ${survivor.length}）`);
 
   // 每个非「通用」角色应该正好 3 个技能

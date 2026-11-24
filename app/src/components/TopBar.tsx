@@ -6,6 +6,7 @@ interface TopBarProps {
   side: Side;
   ownerName: string | null;
   ownerNameEn: string | null;
+  /** 该阵营的真实角色数（**不含** id 为 universal 的「通用」伪角色） */
   ownerCount: number;
   onBack: () => void;
   onSearch: () => void;
