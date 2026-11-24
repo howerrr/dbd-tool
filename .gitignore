@@ -18,3 +18,5 @@ Thumbs.db
 *.local
 .env
 .env.*
+.git-msg.txt
+.msg-tmp.txt
