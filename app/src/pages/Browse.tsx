@@ -397,7 +397,7 @@ export default function Browse() {
       for (const a of addonIndex) {
         const text = a.text ?? '';
         if (!matchesAllTerms(text, activeChipNorms)) continue;
-        if (!matchesQuery(q, a.title, null, a, text)) continue;
+        if (!matchesQuery(q, a.title, a.titleEn ?? null, a, text)) continue;
         all.push({
           id: a.id,
           kind: 'addon',

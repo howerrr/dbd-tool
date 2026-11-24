@@ -897,7 +897,13 @@ button {
   padding: 4px 20px 28px;
 }
 
-/* ---------- 详情头 ---------- */
+/* ---------- 详情头 ----------
+   图标框高度按「三行文字」对齐：
+     中文标题 19px × 1.25 + 4 下边距  ≈ 28
+     英文名   12 + 9 下边距           ≈ 21
+     chips    10.5 + 上下内边距/边框  ≈ 21
+     文本区上内边距                    = 2
+   合计 ≈ 72。原来固定 58px，加了英文名之后图标明显偏小。 */
 .detail-head {
   display: flex;
   align-items: flex-start;
@@ -910,8 +916,8 @@ button {
   display: grid;
   place-items: center;
   flex: none;
-  width: 58px;
-  height: 58px;
+  width: 72px;
+  height: 72px;
   color: var(--ink-dim);
 }
 .detail-head__frame[data-kind='perk']::before {

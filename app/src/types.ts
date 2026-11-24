@@ -52,6 +52,8 @@ export interface AddonIndexEntry {
   id: string;
   ownerId: string;
   title: string;
+  /** 英文名（从 wiki 补齐；「通用」的枯萎血清没有对应杀手页，可能为 null） */
+  titleEn?: string | null;
   rarity: Rarity | null;
   icon: string | null;
   pinyin: string;
