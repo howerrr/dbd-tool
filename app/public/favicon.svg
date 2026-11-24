@@ -14,21 +14,21 @@
   </g>
   <g transform="translate(50 50) scale(1) translate(-50 -50)">
     
-  <g transform="translate(43 46) rotate(45) scale(2.9) translate(-12 -9.5)"
+  <g transform="translate(43 41) rotate(45) scale(2.9) translate(-12 -9.5)"
      fill="none" stroke="#b32020" stroke-width="1.75"
      stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 3v7a4 4 0 1 0 4 4" />
     <circle cx="12" cy="2.6" r="1.7" fill="#b32020" stroke="none" />
   </g>
     
-  <g transform="translate(61 61) scale(2.35) translate(-12 -12.5)"
+  <g transform="translate(61 56) scale(2.35) translate(-12 -12.5)"
      fill="none" stroke="#0a0a0c" stroke-width="5.1"
      stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="8" r="4" />
     <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
   </g>
     
-  <g transform="translate(61 61) scale(2.35) translate(-12 -12.5)"
+  <g transform="translate(61 56) scale(2.35) translate(-12 -12.5)"
      fill="none" stroke="#2f6ea8" stroke-width="1.9"
      stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="8" r="4" />

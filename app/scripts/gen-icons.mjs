@@ -41,7 +41,7 @@ const INK = '#e8e2d6';
  * 绕这个中心 rotate(45) 才是「斜着挂」而不是绕着角落甩出去。
  */
 const HOOK = `
-  <g transform="translate(43 46) rotate(45) scale(2.9) translate(-12 -9.5)"
+  <g transform="translate(43 41) rotate(45) scale(2.9) translate(-12 -9.5)"
      fill="none" stroke="${KILLER}" stroke-width="1.75"
      stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 3v7a4 4 0 1 0 4 4" />
@@ -54,7 +54,7 @@ const HOOK = `
  */
 function human(stroke, width) {
   return `
-  <g transform="translate(61 61) scale(2.35) translate(-12 -12.5)"
+  <g transform="translate(61 56) scale(2.35) translate(-12 -12.5)"
      fill="none" stroke="${stroke}" stroke-width="${width}"
      stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="8" r="4" />
