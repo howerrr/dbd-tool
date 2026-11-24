@@ -111,10 +111,13 @@ export function DetailSheet({ entry, ownerName, onClose }: Props) {
 
               <div className="desc">
                 {entry.description.length ? (
+                  /* 项目符号：数据里用的是 ·（U+00B7），这里同时认 •（U+2022）和 ‧。
+                     之前只判 '•'，导致所有条目其实都没走 .bullet 样式（退化成行内小点），
+                     改成统一的判据。 */
                   entry.description.map((p, i) =>
-                    p.startsWith('•') ? (
+                    /^[·•‧]\s*/.test(p) ? (
                       <p className="bullet" key={i}>
-                        {highlightNumbers(p.replace(/^•\s*/, ''))}
+                        {highlightNumbers(p.replace(/^[·•‧]\s*/, ''))}
                       </p>
                     ) : (
                       <p key={i}>{highlightNumbers(p)}</p>
