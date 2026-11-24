@@ -525,6 +525,38 @@ npm run build && npm run verify
 CSS 里的 `url()` 都存在、没有 PNG 残留、配件索引条数与分包一致、
 每个角色正好 3 个技能、部署元文件都在产物里，并打印各页面的首次加载体积。
 
+### 上线后核查
+
+```bash
+npm run verify:deploy https://<你的域名>
+```
+
+`verify-deploy.mjs` 检查的是**线上行为**（本地 verify 无法覆盖的部分）：
+`_headers` 里的四档缓存是否真的生效、manifest 是否可解析、不存在的 JSON 返回什么、
+`_headers`/`_redirects` 有没有被公开暴露、抽样图片能否取到。
+
+> 若网络访问 `*.workers.dev` 需要代理，Node 要显式开代理支持：
+> `$env:NODE_USE_ENV_PROXY="1"; $env:HTTPS_PROXY="http://127.0.0.1:7897"`
+
+### ⚠️ 部署成 Worker 时的一个大坑
+
+本项目部署为 **Worker**（域名形如 `xxx.workers.dev`），不是 Pages。
+`wrangler.toml` 里必须用 **`[assets] directory`** 声明静态资源目录：
+
+```toml
+[assets]
+directory = "./dist"
+```
+
+如果误写成 Pages 专用的 `pages_build_output_dir = "dist"`，Worker 的 `wrangler deploy`
+不认这个键、又没有 `main`，就会**把项目目录整个当静态资源传上去**。后果：
+
+- 线上可以下载到 `/src/main.tsx`、`/package.json`、`/wrangler.toml`
+- 首页返回的是**未构建的源码 `index.html`**（引用 `/src/main.tsx`），浏览器白屏
+- 所有 `/assets/*`、`/data/*`、`/icons/*` 全部 404
+
+`verify-deploy.mjs` 的第 [3] 项（入口 JS/CSS 是否存在）就是为了第一时间抓到这个。
+
 ### 真机打磨清单（W4，需要在手机上逐条过）
 
 | # | 检查项 | 期望 |
