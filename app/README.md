@@ -488,6 +488,22 @@ git push
 
 之后每次 push 到 `main` 都会自动：`npm ci` → 类型检查 → 单测 → 构建 → 产物自检 → 部署。
 
+### 排查：`actions/configure-pages` 这一步失败
+
+前面的类型检查、单测、构建都过了，却卡在 `Run actions/configure-pages@v5`，
+报类似 `Get Pages site failed. Please verify that the repository has Pages enabled
+and configured to build using GitHub Actions` —— **问题不在代码**，而是仓库设置。
+
+这个 action 只做一件事：跟 GitHub 确认该仓库的 Pages 已启用、且 `build_type = workflow`。
+仓库里 `has_pages` 已经是 `true` 但 Source 选的是 **Deploy from a branch** 时，
+`build_type` 是 `legacy`，它就会失败。
+
+去 **Settings → Pages → Build and deployment → Source** 改选 **GitHub Actions** 即可，
+然后 Actions 页 → `Deploy to GitHub Pages` → **Run workflow** 重跑，不用改代码。
+
+> 如果 Source 停在 `main / (root)`，`https://<user>.github.io/<repo>/` 会把**整个仓库源码**
+> 当静态站发布出去（源码、package.json 全都能下载）。Cloudflare 那次就是这个症状。
+
 ### ⚠️ `app/public/CNAME` 不能删
 
 内容是 `dbd.howerlin.top`，构建后成为 `dist/CNAME` 一起上传。
