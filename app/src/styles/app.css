@@ -1284,50 +1284,47 @@ button {
 
   /* 3. 结果列表：横跨整栏会难以扫读，收成居中的一栏。
         桌面视距比手机远，条目整体放大一档，否则图标和标题都看不太清：
-          缩略 40 → 46px（角色卡 38 → 42px，右侧技能缩略 34 → 36px）
-          标题 13.5 → 16px、副标题 11 → 12.5px
-        行高 = 缩略高 + 上下 padding，所以 padding 同步收回 12px，
-        行高约 74px —— 一屏能看 8~9 条，不至于翻不完。 */
+          缩略 40 → 54px（角色卡 38 → 50px，右侧技能缩略 34 → 42px）
+          标题 13.5 → 18px、副标题 11 → 13.5px
+        行高 = 缩略高 + 上下 padding，所以 padding 收到 14px，
+        整行约 89px —— 一屏能看 7 条左右。 */
   .results {
     max-width: 760px;
     margin-inline: auto;
   }
   .res {
-    gap: 14px;
-    padding: 12px 18px;
+    gap: 16px;
+    padding: 14px 20px;
   }
   .res__shape {
-    width: 46px;
-    height: 46px;
+    width: 54px;
+    height: 54px;
   }
   .res__char {
-    width: 42px;
+    width: 50px;
   }
   .res__mini {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
   }
   .res__t {
-    font-size: 16px;
+    font-size: 18px;
   }
   .res__s {
-    font-size: 12.5px;
+    font-size: 13.5px;
   }
   .results__more {
-    font-size: 12.5px;
+    font-size: 13px;
   }
   .results__empty-t {
-    font-size: 15.5px;
+    font-size: 16px;
   }
   .results__empty-s {
-    font-size: 13px;
+    font-size: 13.5px;
   }
 
   /* 4. 顶栏与搜索栏：桌面没有手势，可以给更从容的留白。
-        搜索态整条内容（输入框 + 筛选词）收成 **760px** ——
-        和下面搜索结果条目的宽度完全一致（`.results` 也是 760px），
-        输入框和结果列表左右两边对齐，视线从上到下是一条直栏。
-        外层那圈深色底和阵营色底线仍然满宽，和顶栏同一种语言。 */
+        搜索态整条（输入框 + 筛选词）**满宽** —— 和最初一致，不再收窄。 */
   .topbar {
     padding: calc(16px + var(--safe-top)) 20px 14px;
   }
@@ -1337,16 +1334,10 @@ button {
   .searchbar {
     padding: calc(14px + var(--safe-top)) 0 12px;
   }
-  .searchbar__row,
-  .chips {
-    max-width: 760px;
-    margin-inline: auto;
-  }
   .searchbar__row {
     padding: 0 20px;
   }
   .chips {
-    justify-content: center;
     padding: 0 20px 2px;
   }
   /* 筛选词与占位词也放大一档；输入框本身是 16px（那是 iOS 防缩放的基线），不动 */
