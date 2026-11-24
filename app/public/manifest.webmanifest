@@ -4,8 +4,8 @@
   "description": "《黎明杀机》中文速查工具：角色、技能、配件与效果搜索。个人自用，非官方。",
   "lang": "zh-CN",
   "dir": "ltr",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0a0c",
@@ -13,19 +13,19 @@
   "categories": ["utilities", "reference"],
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-maskable-512.png",
+      "src": "./icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

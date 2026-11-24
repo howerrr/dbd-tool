@@ -1,4 +1,5 @@
 import type { AddonIndexEntry, Entry, OwnersFile, Side } from '../types';
+import { asset } from '../lib/base';
 
 /**
  * 数据加载层。
@@ -47,18 +48,30 @@ async function getJSON<T>(url: string): Promise<T | null> {
 }
 
 export async function loadOwners(): Promise<OwnersFile> {
-  const data = await getJSON<OwnersFile>('/data/owners.json');
+  const data = await getJSON<OwnersFile>(asset('/data/owners.json'));
   if (!data) throw new Error('角色总览数据缺失');
-  return data;
+  /* 头像路径在 JSON 里是绝对的（/icons/chars/...），这里补上部署 base。
+     统一在数据层的出入口做一次，组件里就不用到处关心部署路径。 */
+  return {
+    ...data,
+    owners: data.owners.map((o) =>
+      o.avatar ? { ...o, avatar: asset(o.avatar) } : o,
+    ),
+  };
 }
 
+/** 给一批条目的图标路径补上部署 base */
+const withIcons = (entries: Entry[]): Entry[] =>
+  entries.map((e) => (e.icon ? { ...e, icon: asset(e.icon) } : e));
+
 export async function loadPerks(side: Side): Promise<Entry[]> {
-  return (await getJSON<Entry[]>(`/data/perks/${side}.json`)) ?? [];
+  return withIcons((await getJSON<Entry[]>(asset(`/data/perks/${side}.json`))) ?? []);
 }
 
 /** 没有配件文件时返回空数组（多数角色尚未录入） */
 export async function loadAddons(ownerId: string): Promise<Entry[]> {
-  return (await getJSON<Entry[]>(`/data/addons/${encodeURIComponent(ownerId)}.json`)) ?? [];
+  const raw = await getJSON<Entry[]>(asset(`/data/addons/${encodeURIComponent(ownerId)}.json`));
+  return withIcons(raw ?? []);
 }
 
 /**
@@ -66,5 +79,6 @@ export async function loadAddons(ownerId: string): Promise<Entry[]> {
  * 只在角色总览打开搜索时按需加载一次，之后走内存缓存。
  */
 export async function loadAddonIndex(): Promise<AddonIndexEntry[]> {
-  return (await getJSON<AddonIndexEntry[]>('/data/addons-index.json')) ?? [];
+  const raw = (await getJSON<AddonIndexEntry[]>(asset('/data/addons-index.json'))) ?? [];
+  return raw.map((a) => (a.icon ? { ...a, icon: asset(a.icon) } : a));
 }

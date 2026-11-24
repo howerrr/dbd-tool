@@ -1,0 +1,69 @@
+name: Deploy to GitHub Pages
+
+# 为什么用 Actions 而不是「分支部署」：
+#   1. 仓库根是工作区，站点在 app/ 子目录，而分支部署只支持 / 或 /docs
+#   2. 站点要经过 Vite 构建，产物不该提交进仓库
+#
+# base 路径：GitHub Pages 项目站地址是 https://<user>.github.io/<repo>/，
+#   站点在子路径下，所以这里从 GITHUB_REPOSITORY 反推 repo 名注入 VITE_BASE。
+#   这样换仓库名也不用改代码。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个部署，新的 push 取消排队中的旧任务
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: app/.nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: 计算 VITE_BASE
+        run: echo "VITE_BASE=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
+
+      - name: 安装依赖
+        working-directory: app
+        run: npm ci
+
+      - name: 类型检查 + 单测
+        working-directory: app
+        run: npm run typecheck && npm test
+
+      # 构建 + 产物自检。verify 是一道门禁：
+      # 图标引用缺失、数据不自洽、残留 PNG 都会让它失败，坏产物上不去。
+      - name: 构建并自检
+        working-directory: app
+        run: npm run build && npm run verify
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

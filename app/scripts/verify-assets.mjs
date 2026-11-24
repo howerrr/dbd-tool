@@ -42,7 +42,15 @@ function walk(dir, out = []) {
 const distFiles = walk(DIST);
 const web = (p) => p.replace(/\\/g, '/');
 const rel = (p) => web(path.relative(DIST, p));
-const existsInDist = (url) => fs.existsSync(path.join(DIST, url.replace(/^\//, '')));
+
+/**
+ * 站点内 URL → dist 内的真实文件。
+ * 构建时可能带部署 base（GitHub Pages 项目站的 `/repo/` 前缀），
+ * 而 dist 里没有这一层目录，所以比较前先把 base 剥掉。
+ */
+const BASE = process.env.VITE_BASE || '/';
+const stripBase = (url) => (url.startsWith(BASE) ? '/' + url.slice(BASE.length) : url);
+const existsInDist = (url) => fs.existsSync(path.join(DIST, stripBase(url).replace(/^\//, '')));
 
 /* ---------- 1. 数据里的 /icons/ 引用 ---------- */
 console.log('\n[1] 数据 → 图标引用');
@@ -173,9 +181,15 @@ console.log('\n[4] 数据一致性');
 
 /* ---------- 5. 部署元文件 ---------- */
 console.log('\n[5] 部署元文件');
-for (const f of ['_redirects', '_headers', 'index.html', 'manifest.webmanifest']) {
+for (const f of ['index.html', 'manifest.webmanifest']) {
   if (fs.existsSync(path.join(DIST, f))) ok(f);
   else bad(`${f} 没有进入 dist`);
+}
+/* _headers / _redirects 是 Cloudflare 专用的。
+   GitHub Pages 上它们不会被识别，而且会被当成普通文件公开下载，所以默认不产出；
+   如果哪天要回 Cloudflare，加回去即可。 */
+for (const f of ['_headers', '_redirects']) {
+  if (fs.existsSync(path.join(DIST, f))) console.log(`    · 存在 ${f}（Cloudflare 专用，GitHub Pages 会忽略）`);
 }
 
 /* ---------- 5b. index.html 里的引用 ---------- */

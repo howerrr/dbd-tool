@@ -453,67 +453,52 @@ wiki 的染色参数是 `sepia(1) saturate(30) hue-rotate(289.1deg) saturate(7) 
 
 深底上 2px 细线用 base 太暗，所以**色条用 glow 变体，详情里的文字/描边用 base**。
 
-## 部署到 Cloudflare Pages
+## 部署到 GitHub Pages
 
-两条路，**自用推荐 A**（不需要建 Git 仓库，改完一条命令就上线）。
+站点走 **Actions 构建 + 官方 Pages 部署**，不用「分支部署」——因为仓库根是工作区、
+站点在 `app/` 子目录，而分支部署只支持 `/` 或 `/docs`；而且 Vite 产物不该提交进仓库。
 
-### A. 直接上传（wrangler）
+### 关键：项目站在子路径下
 
-**wrangler 不是项目依赖**（会让 `npm install` 多下 ~50MB，而云端 Git 构建根本不需要它），
-所以走 `npx --yes wrangler@4` 按需拉取。三步，在 `app/` 目录下执行：
-
-```powershell
-npx wrangler login                 # 一次性：弹出浏览器，授权自己的 Cloudflare 账号
-npm run build && npm run verify     # 门禁：verify 不通过就别传
-npm run deploy                      # = npx --yes wrangler@4 pages deploy dist --project-name=dbd-tool
-```
-
-首次 `deploy` 会问要不要创建名为 `dbd-tool` 的项目（选 y），之后每次都是覆盖生产环境。
-不想交互式授权就用 API Token：Dashboard 建一个带 *Cloudflare Pages:Edit* 权限的 token，
-设好 `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID` 两个环境变量即可免登录。
-
-> ⚠️ 这三步**必须在普通终端里跑**。wrangler 依赖 esbuild，
-> esbuild 需要 spawn 子进程，被受限沙箱（pipe stdio）挡住时会报 `spawn EPERM`。
-> 同理 `wrangler dev` / `pages dev` 也跑不了 —— 本地验证请用 `npm run preview`。
-
-### B. 连接 Git 仓库（想 push 自动部署再走这条）
-
-- Framework preset: **Vite**
-- Build command: `npm run build && npm run verify`
-- Build output directory: `dist`
-- Root directory: `app`（仓库根就是 app/ 则留空）
-- 环境变量：`NODE_VERSION = 22`
-
-> 注意：这个项目目前**不是 git 仓库**，走 B 之前得先 `git init` + 推到 GitHub。
-
-### 私有化（强烈建议）
-
-Dashboard → Zero Trust → Access → Applications → Add an application → Self-hosted，
-域名填你 Pages 的地址，策略用 **One-time PIN + 只允许自己的邮箱**。
-免费版 50 人以内够用。站点变成「只有我能打开」，素材版权暴露面直接归零。
-
-### 两个元文件
-
-`public/_redirects` —— SPA 回退：
+个人站 `https://<user>.github.io/` 每个账号只能有一个（已被你的个人站占用），
+所以本项目只能是**项目站**：
 
 ```
-/*    /index.html   200
+https://<user>.github.io/<仓库名>/
 ```
 
-注意它会把**不存在的 JSON 也回退成 index.html 并返回 200**。
-所以 `src/data/api.ts` 不能只看 `res.ok`，必须先确认 `content-type` 含 `json`，
-否则会把 HTML 当 JSON 解析然后炸掉。这个坑在 Vite dev 下同样存在。
+于是所有资源都在 `/仓库名/` 这个子路径下。代码里做了两件事：
 
-`public/_headers` —— 三档缓存，按「内容变不变」分：
+1. `vite.config.ts` 的 `base` 由环境变量 `VITE_BASE` 决定（默认 `'/'`），
+   workflow 里从 `GITHUB_REPOSITORY` 反推仓库名注入 —— **换仓库名不用改代码**。
+2. 数据 JSON 里存的是绝对路径（`/icons/chars/k-01.webp`），不会自动带前缀，
+   统一由 `src/lib/base.ts` 的 **`asset()`** 在**数据加载层**补一次
+   （`api.ts` 的四个 `load*` 函数出口处）。组件层完全不用关心部署路径。
 
-| 路径 | 缓存 | 依据 |
-|---|---|---|
-| `/assets/*` | `max-age=31536000, immutable` | Vite 产物，文件名带内容 hash |
-| `/icons/*` | `max-age=604800` + `stale-while-revalidate` | 文件名来自 wiki（无 hash），只在重新导入时变 |
-| `/data/*` | `max-age=600` + `stale-while-revalidate` | 重新导入会变，太短则每次打开都重下，太长则看不到新条目 |
-| `/index.html` | `max-age=0, must-revalidate` | 避免部署后拿到旧壳配新 assets |
+> 卡片框（`frame-killer/survivor.webp`）特别从 `public/` 挪进了 `src/assets/`：
+> 只有走 Vite 资源管线，CSS 里的 `url()` 才会被重写成带 base 且带内容 hash 的路径。
 
-另外整站加了 `X-Robots-Tag: noindex`（个人自用，不需要被搜到）。
+### 三个手动步骤
+
+1. **Settings → Pages → Source** 选 **GitHub Actions**（不是 Deploy from a branch）
+2. 推代码：`.github/workflows/pages.yml` 会自动跑 `npm ci` → 类型检查 → 单测 → 构建 → 产物自检 → 部署
+3. 等 Actions 绿了，访问 `https://<user>.github.io/<仓库名>/`
+
+之后每次 `git push` 到 `main` 都会自动重新部署。
+
+> ⚠️ **私有仓库 + GitHub Pages 需要 GitHub Pro**。免费账号只能用公开仓库发布 Pages，
+> 而公开仓库等于把 wiki 素材再分发一遍（`public/` 里 1298 张图）。
+> 自己权衡：Pro / 公开仓库 / 换回 Cloudflare。
+
+### 上线后核查
+
+```bash
+npm run verify:deploy https://<user>.github.io/<仓库名>/
+```
+
+检查的是**线上行为**：入口 JS/CSS 是否存在（能第一时间抓到「部署了源码而不是产物」）、
+manifest 能否解析、不存在的 JSON 返回什么、抽样图片能否取到。
+GitHub Pages 没有 `_headers`，所以缓存那几项会显示「缺少响应头」——那是预期内的。
 
 ### 上线前自检
 
@@ -521,27 +506,21 @@ Dashboard → Zero Trust → Access → Applications → Add an application → 
 npm run build && npm run verify
 ```
 
-`verify-assets.mjs` 会检查：每个 `/icons/` 引用都能在 dist 里找到真实文件、
+`verify-assets.mjs` 检查：每个 `/icons/` 引用都能在 dist 里找到真实文件、
 CSS 里的 `url()` 都存在、没有 PNG 残留、配件索引条数与分包一致、
-每个角色正好 3 个技能、部署元文件都在产物里，并打印各页面的首次加载体积。
+每个角色正好 3 个技能、入口资源与 manifest 都在产物里，并打印各页面的首次加载体积。
+带 base 构建时也能跑（脚本会自动剥掉 `VITE_BASE` 前缀再比对文件）。
 
-### 上线后核查
+---
 
-```bash
-npm run verify:deploy https://<你的域名>
-```
+## 附：之前用 Cloudflare 时踩的坑
 
-`verify-deploy.mjs` 检查的是**线上行为**（本地 verify 无法覆盖的部分）：
-`_headers` 里的四档缓存是否真的生效、manifest 是否可解析、不存在的 JSON 返回什么、
-`_headers`/`_redirects` 有没有被公开暴露、抽样图片能否取到。
+（保留作参考。若哪天换回 Cloudflare，这些结论仍然有效。）
 
-> 若网络访问 `*.workers.dev` 需要代理，Node 要显式开代理支持：
-> `$env:NODE_USE_ENV_PROXY="1"; $env:HTTPS_PROXY="http://127.0.0.1:7897"`
+### 部署成 Worker 时的大坑
 
-### ⚠️ 部署成 Worker 时的一个大坑
-
-本项目部署为 **Worker**（域名形如 `xxx.workers.dev`），不是 Pages。
-`wrangler.toml` 里必须用 **`[assets] directory`** 声明静态资源目录：
+Cloudflare 的域名形如 `xxx.workers.dev` 说明项目是 **Worker** 而不是 Pages。
+`wrangler.toml` 里必须用 **`[assets] directory`**：
 
 ```toml
 [assets]
@@ -552,10 +531,20 @@ directory = "./dist"
 不认这个键、又没有 `main`，就会**把项目目录整个当静态资源传上去**。后果：
 
 - 线上可以下载到 `/src/main.tsx`、`/package.json`、`/wrangler.toml`
-- 首页返回的是**未构建的源码 `index.html`**（引用 `/src/main.tsx`），浏览器白屏
+- 首页返回**未构建的源码 `index.html`**（引用 `/src/main.tsx`），浏览器白屏
 - 所有 `/assets/*`、`/data/*`、`/icons/*` 全部 404
 
 `verify-deploy.mjs` 的第 [3] 项（入口 JS/CSS 是否存在）就是为了第一时间抓到这个。
+
+### Cloudflare 专用的两个元文件
+
+`public/_redirects`（SPA 回退 `/* → /index.html 200`）与 `public/_headers`（四档缓存）。
+注意 `_redirects` 会把**不存在的 JSON 也回退成 index.html 并返回 200**，
+所以 `api.ts` 不能只看 `res.ok`，必须校验 `content-type` 含 `json` —— 这个兜底在
+GitHub Pages 下同样保留（那里是干净的 404，但 Vite dev server 仍会回退成 HTML）。
+
+改用 GitHub Pages 后这两个文件已删除：Pages 不识别它们，而且会被当普通文件公开下载。
+
 
 ### 真机打磨清单（W4，需要在手机上逐条过）
 

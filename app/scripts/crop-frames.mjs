@@ -18,7 +18,9 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 const SRC_DIR = path.resolve('scripts/assets/card-source');
-const OUT_DIR = path.resolve('public/icons/card');
+/* 输出到 src/assets 而不是 public/icons：走 Vite 资源管线才会自动带部署 base
+   （GitHub Pages 项目站在子路径下，public 里的绝对路径会 404），并且文件名带 hash。 */
+const OUT_DIR = path.resolve('src/assets/card');
 const ALPHA_THRESHOLD = 128;
 
 fs.mkdirSync(OUT_DIR, { recursive: true });

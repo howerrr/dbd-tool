@@ -208,11 +208,15 @@ button {
   background-position: center;
   pointer-events: none;
 }
+/* 卡片框放在 src/assets 而不是 public：走 Vite 的资源管线后
+   1) 自动带部署 base（GitHub Pages 项目站在子路径下也能正确加载）
+   2) 文件名带内容 hash，可以无限缓存
+   代价是要用相对路径引用（相对于本 CSS 文件编译后的位置，Vite 会重写成 /assets/xxx.webp）。 */
 .char__av[data-role='killer'] .char__frame {
-  background-image: url('/icons/card/frame-killer.webp');
+  background-image: url('../assets/card/frame-killer.webp');
 }
 .char__av[data-role='survivor'] .char__frame {
-  background-image: url('/icons/card/frame-survivor.webp');
+  background-image: url('../assets/card/frame-survivor.webp');
 }
 /* 角色抠图：保留 wiki 原始的正方形画布（不裁边），按固定宽度等比缩放。
    这样所有角色共享同一画布尺度 —— 观感与 wiki 名册一致，
