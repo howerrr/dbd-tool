@@ -75,6 +75,7 @@ const NEW_PERKS = [
       '离开范围后效果维持3/4/5秒。',
       '你能看到完成修理发电机的气场。',
     ],
+    flavor: '“你他妈开什么玩笑？不，你肯定有事，你现在的样子肯定有事。”——布鲁克',
   },
   {
     file: 'perks/killer.json',
@@ -89,6 +90,7 @@ const NEW_PERKS = [
       '击杀一名逃生者期间，两个出口大门开关会被封锁。',
       '击杀完成12/16/20秒后，此效果结束。',
     ],
+    flavor: '“他杀了一个又一个，就像宰牛一样。”——养猫女人',
   },
   {
     file: 'perks/killer.json',
@@ -106,6 +108,7 @@ const NEW_PERKS = [
       '·出现彩色纸屑，但无事发生。',
       '冷却时间60/50/40秒。同一效果不会连续出现两次。',
     ],
+    flavor: '“玻璃、虫子还有刀片——谁也不知道你会吃到什么。”——小丑咖啡广告词',
   },
   {
     file: 'perks/survivor.json',
@@ -116,6 +119,7 @@ const NEW_PERKS = [
     icon: '/icons/T_UI_iconsPerks_ValkyriesRage.webp',
     page: "Valkyrie's Rage",
     description: ['被追逐40/35/30秒后，下一次用木板击晕杀手，眩晕持续时间延长75%。'],
+    flavor: '“疼死你，混蛋！”——西耶娜·肖',
   },
   {
     file: 'perks/survivor.json',
@@ -129,6 +133,7 @@ const NEW_PERKS = [
       '当你承受保护攻击时，12米范围内所有逃生者在接下来的30/35/40秒内即使奔跑也能从疲劳状态中恢复。',
       '你能看见32米范围内处于疲劳状态逃生者的气场。',
     ],
+    flavor: '“什么？我喜欢她的伤疤。我就是觉得很酷啊。”——加比·肖',
   },
   {
     file: 'perks/survivor.json',
@@ -148,6 +153,7 @@ const NEW_PERKS = [
       '·医疗箱：治疗另一名逃生者期间，你也以25%速度获得治疗进度。',
       '·工具箱：相距最近的3台发电机气场对你可见。',
     ],
+    flavor: '“倘若恶魔以肉身进入这个世界，必须给它指定一名克星，避免它过于强大。”——乔纳森·肖',
   },
 ];
 
@@ -218,6 +224,7 @@ const UPDATED_PERKS = [
 /* ---------- 执行 ---------- */
 let addedOwners = 0;
 let addedPerks = 0;
+let refreshedPerks = 0;
 let updatedPerks = 0;
 
 const ownersFile = read('owners.json');
@@ -245,7 +252,21 @@ if (addedOwners) {
 
 for (const p of NEW_PERKS) {
   const list = read(p.file);
-  if (list.some((x) => x.id === p.id)) continue;
+  const existing = list.find((x) => x.id === p.id);
+
+  /* upsert：已存在时只刷新文本字段（描述 + 风味）。
+     否则「先补数据、后补 flavor」这种两趟操作会被 skip 吃掉，风味永远补不上。 */
+  if (existing) {
+    const before = JSON.stringify({ d: existing.description, f: existing.flavor });
+    existing.description = p.description;
+    existing.flavor = p.flavor ?? '';
+    if (JSON.stringify({ d: existing.description, f: existing.flavor }) !== before) {
+      write(p.file, list);
+      refreshedPerks++;
+    }
+    continue;
+  }
+
   list.push({
     id: p.id,
     kind: 'perk',
@@ -253,7 +274,7 @@ for (const p of NEW_PERKS) {
     title: p.title,
     titleEn: p.titleEn,
     description: p.description,
-    flavor: '',
+    flavor: p.flavor ?? '',
     icon: p.icon,
     glyph: hashGlyph(p.id),
     confidence: 1,
@@ -282,5 +303,6 @@ for (const u of UPDATED_PERKS) {
 console.log('=== 完成 ===');
 console.log(`  新角色 ${addedOwners} 个`);
 console.log(`  新技能 ${addedPerks} 条`);
+console.log(`  刷新技能文本 ${refreshedPerks} 条`);
 console.log(`  更新技能 ${updatedPerks} 条`);
 console.log(`  owners.json version: ${read('owners.json').version}`);
