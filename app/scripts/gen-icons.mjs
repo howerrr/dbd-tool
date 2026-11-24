@@ -4,15 +4,19 @@
  * 全部由下面这一份内联 SVG 渲染出来，尺寸、留白、圆角都在代码里，
  * 想改样式改这一处再跑一遍即可 —— 不要在 public/ 里手改 PNG。
  *
- * 图形选择：一把**钩子**。它是《黎明杀机》最标志性的形状，
- * 在 32px 下依然能认出轮廓；配色沿用站内的血红 + 近黑底。
+ * 图形：**红色杀戮钩子（斜 45°） + 蓝色人形**叠加。
+ * 两个形状都直接取自站内组件 `components/Icons.tsx` 的 `IconKiller` / `IconSurvivor`
+ * （同一套 24 空间的线性语言），所以图标和页面里的阵营图标是同一个形状。
+ * 叠法：钩子在左上、45° 倾斜；人形在右下压在上面。
+ * 人形先拿**底色描一圈**（knockout）再描蓝色，两色之间才有一道干净的缝 ——
+ * 否则 32px 下红蓝两笔会糊成一团。
  *
  * 三个尺寸的差异（这几个坑不处理，装到主屏会很难看）：
- *   - favicon / 普通图标：留 8% 边距、圆角 22%
+ *   - favicon / 普通图标：留边、圆角
  *   - apple-touch-icon（180）：**必须铺满、不能有圆角和透明**，
  *     iOS 会自己裁圆角并垫黑底，留边会显得图标缩了一圈
  *   - maskable（512）：图形要缩到画布 80% 的安全圆内，
- *     否则安卓启动器裁成圆形时会把钩子切掉
+ *     否则安卓启动器裁成圆形时会把图形切掉
  *
  * WebP 不用于这里：Safari 的 apple-touch-icon 和部分安卓启动器不认。
  * 所以 public 根目录下这几个 PNG 是「全站唯一允许存在的 PNG」，
@@ -27,29 +31,45 @@ import sharp from 'sharp';
 const PUBLIC = path.resolve('public');
 
 const BG = '#0a0a0c';
-const ACCENT = '#b32020';
+const KILLER = '#b32020';
+const SURVIVOR = '#2f6ea8';
 const INK = '#e8e2d6';
 
-/** 钩子本体，坐标系是 0..100 */
+/**
+ * 钩子（= IconKiller）：竖杆 + 一个大弯钩 + 顶端的钉头。
+ * 24 空间里的包围盒是 x 8..16 / y 1..18（钉头 + 弯钩最低点），中心 ≈ (12, 9.5)。
+ * 绕这个中心 rotate(45) 才是「斜着挂」而不是绕着角落甩出去。
+ */
 const HOOK = `
-  <path d="M50 18 V 54 C 50 78 79 78 79 61" fill="none"
-        stroke="${ACCENT}" stroke-width="9"
-        stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="50" cy="13.5" r="5" fill="${ACCENT}" />
-`;
+  <g transform="translate(43 46) rotate(45) scale(2.9) translate(-12 -9.5)"
+     fill="none" stroke="${KILLER}" stroke-width="1.75"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3v7a4 4 0 1 0 4 4" />
+    <circle cx="12" cy="2.6" r="1.7" fill="${KILLER}" stroke="none" />
+  </g>`;
 
 /**
- * 上面那个钩子的笔画包围盒中心并不在 (50,50)：
- * 横轴上钩尾甩到 x≈83、竖轴在 x≈45.5，重心偏右约 14.5；
- * 纵轴下缘只到 ≈76.5、上缘 8.5，偏上约 7.5。
- * 图标必须视觉居中，所以整块平移回来。改路径时这个偏移要跟着重算。
+ * 人形（= IconSurvivor）：头 + 肩膀。24 空间里包围盒 x 4.5..19.5 / y 4..21，中心 ≈ (12, 12.5)。
+ * 画两遍：先用底色描粗一圈当 knockout，再用蓝色描细一圈 —— 叠在钩子上也能分得开。
  */
-const CENTER = 'translate(-14.5 7.5)';
+function human(stroke, width) {
+  return `
+  <g transform="translate(61 61) scale(2.35) translate(-12 -12.5)"
+     fill="none" stroke="${stroke}" stroke-width="${width}"
+     stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+  </g>`;
+}
+
+/** knockout 的粗细：比蓝线多出约 3.2 个「24 空间」单位 ≈ 画面上 3.7/100 的缝 */
+const KNOCKOUT = 5.1;
+const STROKE = 1.9;
 
 /**
  * @param {object} o
  * @param {number} o.radius   圆角半径（0..50，单位同 0..100 坐标系）
- * @param {number} o.scale    钩子缩放（maskable 要缩到 0.78）
+ * @param {number} o.scale    整组图形缩放（maskable 要缩到 0.78）
  * @param {boolean} o.glow    是否加顶部冷光（和站内暗角/光感一致）
  */
 function buildSvg({ radius, scale, glow }) {
@@ -67,7 +87,11 @@ function buildSvg({ radius, scale, glow }) {
     <rect x="0" y="0" width="100" height="100" fill="${BG}" />
     ${glow ? '<rect x="0" y="0" width="100" height="100" fill="url(#light)" />' : ''}
   </g>
-  <g transform="translate(50 50) scale(${scale}) translate(-50 -50) ${CENTER}">${HOOK}</g>
+  <g transform="translate(50 50) scale(${scale}) translate(-50 -50)">
+    ${HOOK}
+    ${human(BG, KNOCKOUT)}
+    ${human(SURVIVOR, STROKE)}
+  </g>
 </svg>`;
 }
 

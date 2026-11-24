@@ -1,4 +1,4 @@
-# 迷雾工具箱 · app
+# 杀机图鉴 · app
 
 自用的《黎明杀机》中文工具站。移动端优先，部署 **GitHub Pages**（`dbd.howerlin.top`）。
 
@@ -628,6 +628,37 @@ wiki 的染色参数是 `sepia(1) saturate(30) hue-rotate(289.1deg) saturate(7) 
 | （活动） | `event` | `#D57C1F` | `#FFB843` |
 
 深底上 2px 细线用 base 太暗，所以**色条用 glow 变体，详情里的文字/描边用 base**。
+
+## 站点图标：红钩子 + 蓝人形
+
+站名 **杀机图鉴**，图标是两半叠加：
+
+```
+   ╱  红色杀戮钩子（斜 45°）        ← IconKiller 的形状
+  ◯   蓝色人形（头 + 肩膀）压在上面   ← IconSurvivor 的形状
+```
+
+两个形状直接取自 `components/Icons.tsx` 的 `IconKiller` / `IconSurvivor`（同一套 24 空间线性语言），
+所以图标和页面里的阵营图标是同一个形状，不是另画一套。
+
+**叠法**：钩子在左上、`rotate(45)`；人形在右下压在上面。人形要画**两遍** ——
+先用底色 `#0a0a0c` 描粗一圈（knockout），再描细一圈蓝色。
+不这么做的话，32px 下红蓝两笔会糊成一团；那道底色的缝就是两个图形之间的「呼吸」。
+
+**唯一来源是 `scripts/gen-icons.mjs`**：内联 SVG → sharp 渲染 → `favicon.svg` + 6 个 PNG。
+改图标就改脚本里那段 SVG，然后 `npm run gen:icons`，**不要手改 `public/` 里的 PNG**。
+
+三个尺寸的差异（不处理装到主屏会很难看）：
+
+| 产物 | 处理 |
+|---|---|
+| `favicon.svg` / `favicon-32.png` | 圆角 22、留边，`glow: false`（32px 上看不出光） |
+| `icon-192/512` | 同上，带顶部冷光 |
+| `apple-touch-icon.png`（180） | **直角满铺、不许圆角** —— iOS 自己裁圆角，留边会显得缩了一圈 |
+| `icon-maskable-512.png` | 图形缩到 `scale: 0.78`，否则安卓启动器裁圆形会把钩子切掉 |
+
+这几个 PNG 是**全站唯一允许存在的 PNG**（Safari 的 `apple-touch-icon` 和部分安卓启动器不认 WebP），
+`verify-assets.mjs` 对它们有白名单。
 
 ## 首屏加载动画（`index.html` 内联的 `#splash`）
 
