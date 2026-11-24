@@ -1297,70 +1297,74 @@ button {
     font-size: 14.5px;
   }
 
-  /* 4. 顶栏与搜索栏：桌面没有手势，可以给更从容的留白 */
+  /* 4. 顶栏与搜索栏：桌面没有手势，可以给更从容的留白。
+        搜索框**不再拉满整栏**：收成一条约 1/3 栏宽的居中输入框，和下面居中的
+        结果栏（760px）共用同一条中轴线，视线从上到下是一条直线。
+        ⚠️ 返回键改成绝对定位钉在最左边 —— 它若留在流里，输入框会被往右推，
+           居中就成了「看着偏左」的假居中。top:2px 是 (行高 40 − 键高 36) / 2。 */
   .topbar {
     padding: calc(16px + var(--safe-top)) 20px 14px;
   }
   .topbar__title {
     font-size: 19px;
   }
+  .searchbar {
+    padding: calc(14px + var(--safe-top)) 0 12px;
+  }
   .searchbar__row {
+    position: relative;
+    justify-content: center;
     padding: 0 20px;
   }
+  .searchbar .topbar__back {
+    position: absolute;
+    top: 2px;
+    left: 20px;
+    margin-left: 0;
+  }
+  /* clamp：900px 视口下 360px（再窄占位词就被截了），
+     1360px 栏宽下约 517px ≈ 1/3 栏宽，超大屏封顶 540px */
+  .searchbar .field {
+    flex: 0 1 auto;
+    width: clamp(360px, 38vw, 540px);
+  }
+  /* 筛选词跟着输入框居中，宽度放到 820px 让它多塞几个词、少换行 */
   .chips {
+    justify-content: center;
+    max-width: 820px;
+    margin-inline: auto;
     padding: 0 20px 2px;
   }
   .sect__t {
     font-size: 14px;
   }
 
-  /* 5. 底部 Tab：桌面上收成居中的**药丸分段控件**。
-        两个 Tab 等分整条药丸（flex: 1 1 0），这样挂在 .tabbar 上的
-        50% 宽滑动指示条才能精确落到各自那一半上。 */
+  /* 5. 底部 Tab：桌面**沿用移动端那一套**（满宽条 + 顶部 2px 滑动光带 + 上方余晖），
+        因为那套读起来是「面板的底边在发光」，和顶栏是同一种语言。
+        上一版做成居中的浮动药丸 + 药丸滑块，脱开了底边、又和顶栏毫无呼应，已废弃。
+        唯一的桌面改动：两个 Tab 从「各占一半」收成居中的一组（180px × 2）——
+        1360px 栏宽下各占一半的话，两个标签之间会隔出 680px 的空白。
+        于是光带也不再是 width:50%，而是「宽度 = 一个 Tab、left 先退到第一个 Tab 的起边」：
+          left: calc(50% - 180px)  →  正好是第一个 Tab 的左边缘
+          translateX(100%)         →  右移 180px，正好是第二个 Tab 的左边缘
+        两个 Tab 等宽且居中，所以这条换算在任何宽度下都成立。 */
   .tabbar {
-    max-width: 320px;
-    height: 46px;
-    margin: 0 auto 14px;
-    padding: 4px;
-    border: 1px solid var(--line2);
-    border-radius: 999px;
-    background: rgba(12, 12, 15, 0.9);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-    overflow: hidden;
+    justify-content: center;
   }
   .tab {
-    flex: 1 1 0;
-    min-width: 0;
-    flex-direction: row;
-    gap: 7px;
+    flex: 0 0 180px;
   }
   .tab svg {
-    width: 17px;
-    height: 17px;
+    width: 20px;
+    height: 20px;
   }
   .tab span {
-    font-size: 12px;
-    letter-spacing: 0.08em;
+    font-size: 11.5px;
   }
-  /* 桌面把「顶部光带」换成「滑动的药丸底色」：
-     tabbar 内边距 4px，指示条 left:4px、width: calc(50% - 4px)
-     ＝ 恰好一个 Tab 的宽度 → translateX(100%) 正好停在第二个 Tab 上 */
-  .tabbar::before {
-    top: 4px;
-    left: 4px;
-    width: calc(50% - 4px);
-    height: calc(100% - 8px);
-    border-radius: 999px;
-    background: var(--accent-soft);
-    box-shadow:
-      inset 0 0 0 1px var(--accent-ring),
-      0 0 18px var(--accent-soft);
-  }
+  .tabbar::before,
   .tabbar::after {
-    display: none; /* 药丸形态不需要顶部余晖 */
-  }
-  .tab[aria-selected='true'] svg {
-    transform: scale(1.05); /* 横向布局下不要上浮 */
+    left: calc(50% - 180px);
+    width: 180px;
   }
 
   /* 6. 抽屉：变成居中的卡片，仍然从底部滑入。
