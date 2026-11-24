@@ -48,7 +48,7 @@ const RARITY = {
    标点统一成中文全角，其余措辞照抄游戏内文本。 */
 const ZH = {
   'The Ninth Circle': {
-    title: '第九圈',
+    title: '《第九圈》',
     rarity: 'ultra',
     flavor: '虐待倾向，惊悚血腥，令人震惊。究竟什么样的人会对这种东西感兴趣？',
     description: [
@@ -336,8 +336,11 @@ for (const a of parsed) {
     title: zh.title,
     titleEn: a.name,
     rarity: zh.rarity,
-    description: zh.description,
-    flavor: `“${zh.flavor}”`,
+    /* 游戏里那段文字**就是描述的第一段**，不是独立的引用块，也不带引号。
+       所以并到 description 最前面，flavor 留空
+       —— 否则会在抽屉底部多出一段带引号的斜体，和游戏内顺序也对不上。 */
+    description: zh.flavor ? [zh.flavor, ...zh.description] : zh.description,
+    flavor: '',
     icon: a.icon,
     glyph: hashGlyph(id),
     confidence: 1,
