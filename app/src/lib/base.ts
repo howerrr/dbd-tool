@@ -29,8 +29,8 @@ export function asset<T extends string | null | undefined>(path: T): T {
  * 三档由 scripts/gen-portrait-sizes.mjs 生成。传进来的 `src` 应该已经过 `asset()`，
  * 这里只按后缀派生文件名 —— 所以三种部署 base 下都成立。
  *
- * 之所以值得做：手机上角色卡 6 列，人像只显示 69 CSS px，却在下载 200×200 的图。
- * 首屏 40 张从 965KB 降到 DPR2 的约 327KB。
+ * 之所以值得做：手机上角色卡 6 列，人像实际只显示 ≈69 CSS px，
+ * 却在下载 200×200 的图。首屏 40 张原本要 965KB。
  */
 export function avatarSrcSet(src: string): string {
   if (!src || !src.endsWith('.webp')) return src;
@@ -39,8 +39,22 @@ export function avatarSrcSet(src: string): string {
 }
 
 /**
- * 人像的 sizes：描述图片在布局中的**CSS 宽度**，浏览器拿它乘设备像素比去挑档位。
- * - 手机 6 列：卡片约 56px，人像按 124% 显示 ≈ 69px
- * - 桌面 12 列（≥900px）：卡片约 101px，人像 ≈ 125px
+ * 人像的 sizes：描述图片在布局中的 **CSS 宽度**，浏览器用它乘设备像素比去挑档位。
+ *
+ * 手机档刻意写 **48px**，比实际显示宽度（≈69px）小 —— 这是有意的欠采样：
+ *
+ *   DPR1 → 需要 48  → 选 96w   (3.9KB/张)
+ *   DPR2 → 需要 96  → 选 96w   (3.9KB)   ← 原来 144w
+ *   DPR3 → 需要 144 → 选 144w  (8.2KB)   ← 原来选 200w 母版 24.2KB
+ *
+ * 首屏 40 张：DPR2 327KB → 157KB，**DPR3 965KB → 327KB（−66%）**。
+ * 代价是 DPR2/DPR3 的采样率都降到约 76%（144/189），但卡片人像只有 63px 宽，
+ * 浏览器本来还要再降采样一次，真机上看不出差别。
+ *
+ * 想要更保守的话有两个方向：
+ *   · sizes 改回 69px → 恢复满采样，iPhone 首屏回到 965KB
+ *   · 多出一档 @180（≈12KB/张）并把 sizes 设成 56px → DPR3 约 480KB、采样率 89%
+ *
+ * 桌面档 125px 是 12 列布局下卡片 101px × 124% 的实测值，DPR1 选 144w、DPR2 选 200w。
  */
-export const AVATAR_SIZES = '(min-width: 900px) 125px, 69px';
+export const AVATAR_SIZES = '(min-width: 900px) 125px, 48px';
