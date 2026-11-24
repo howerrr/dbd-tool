@@ -9,16 +9,17 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --test-isolation=none --experimental-strip-types tests/search.test.ts",
+    "test": "node --experimental-strip-types --test tests/search.test.ts",
+    "test:one-process": "node --experimental-strip-types --test --test-isolation=none tests/search.test.ts",
     "verify": "node scripts/verify-assets.mjs",
     "import": "node scripts/import-dbd.mjs && node scripts/import-portraits.mjs",
     "import:no-icons": "node scripts/import-dbd.mjs --no-icons",
     "import:portraits": "node scripts/import-portraits.mjs",
     "to:webp": "node scripts/to-webp.mjs",
     "gen:icons": "node scripts/gen-icons.mjs",
-    "check": "npm run typecheck && npm test && npm run build && npm run verify",
+    "check": "npm run typecheck && npm run test:one-process && npm run build && npm run verify",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build -r https://github.com/howerrr/dbd-tool.git -b gh-pages",
+    "deploy": "gh-pages -d dist -r https://github.com/howerrr/dbd-tool.git -b gh-pages",
     "deploy:pages": "npm run build && npm run verify && npx --yes wrangler@4 pages deploy dist --project-name=dbd-tool",
     "verify:deploy": "node scripts/verify-deploy.mjs"
   },
@@ -28,6 +29,7 @@
     "react-router-dom": "^7.18.6"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",

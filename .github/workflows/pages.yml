@@ -42,9 +42,17 @@ jobs:
         working-directory: app
         run: npm ci
 
-      - name: 类型检查 + 单测
+      - name: 类型检查
         working-directory: app
-        run: npm run typecheck && npm test
+        run: npm run typecheck
+
+      # 注意：这里用 `npm test`（默认进程隔离）。
+      # 不要换成 --test-isolation=none —— 那个 flag 在 Node 22 上叫
+      # --experimental-test-isolation，旧名会直接报 bad option。
+      # 受限环境（禁止 spawn 子进程）里改用 `npm run test:one-process`。
+      - name: 单测
+        working-directory: app
+        run: npm test
 
       # 构建 + 产物自检。verify 是一道门禁：
       # 图标引用缺失、数据不自洽、残留 PNG 都会让它失败，坏产物上不去。
