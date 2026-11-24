@@ -116,13 +116,14 @@
 
       /* ---------- 计数划痕：四条竖线 + 一条斜线 ----------
          按游戏那个标记的比例来（四条竖血痕 = 四个逃生者，一条斜痕 = 屠夫）：
-           · 整体接近正方形（viewBox 100×100，画满约 89×83）
-           · 四条竖线窄而高，x 间距 21（线宽 9，间隙 12 —— 四条之间留得比较开）
+           · 整体接近正方形（viewBox 100×100，画满约 97×89）
+           · 四条竖线细而高，x 间距 21、线宽 7（间隙 14 —— 四条之间留得比较开）
            · 中间两根比左右两根长，而且**上下都探出**：
-             左右 y 24→78（长 54），中间 y 14→88（长 74），各多出 10
-           · 斜线**从左上划到右下**，约 20° 的浅角度横穿四条，两端各探出一截，最后才划
-         viewBox 100×100：竖线 x = 19 / 40 / 61 / 82；斜线 (10,37) → (90,66)，
-         dy/dx = 29/80 → 19.9°，落点从左竖线的上部 y≈40 到右竖线的下部 y≈63。
+             左右 y 22→76（长 54），中间 y 10→92（长 82）
+           · 斜线**从左上划到右下**，约 20° 的浅角度横穿四条，两端探出得比较远
+             （几乎顶到画布两侧），最后才划
+         viewBox 100×100：竖线 x = 19 / 40 / 61 / 82；斜线 (5,34) → (95,67)，
+         dy/dx = 33/90 → 20.1°，落点从左竖线的上部 y≈39 到右竖线的下部 y≈62。
          每条 path 上都写了 pathLength="1"，把自身长度归一化 ——
          这样 dasharray / dashoffset 统一用 1 就够了，五条线的「生长速度」
          与长短无关，不会出现斜线先画完、竖线还在半路的情况。 */
@@ -136,7 +137,7 @@
       .sp-tally path {
         fill: none;
         stroke: #e8e2d6;
-        stroke-width: 9;
+        stroke-width: 7;
         stroke-linecap: butt;
         stroke-dasharray: 1;
         stroke-dashoffset: 1;
@@ -259,11 +260,11 @@
     <div id="splash" role="status" aria-live="polite" aria-label="正在载入">
       <div class="sp-fog"></div>
       <svg class="sp-tally" viewBox="0 0 100 100" aria-hidden="true">
-        <path d="M19 78V24" pathLength="1" />
-        <path d="M40 88V14" pathLength="1" />
-        <path d="M61 88V14" pathLength="1" />
-        <path d="M82 78V24" pathLength="1" />
-        <path d="M10 37L90 66" pathLength="1" />
+        <path d="M19 76V22" pathLength="1" />
+        <path d="M40 92V10" pathLength="1" />
+        <path d="M61 92V10" pathLength="1" />
+        <path d="M82 76V22" pathLength="1" />
+        <path d="M5 34L95 67" pathLength="1" />
       </svg>
     </div>
     <div id="root"></div>
