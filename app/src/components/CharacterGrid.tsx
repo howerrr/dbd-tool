@@ -1,4 +1,5 @@
 import type { Owner } from '../types';
+import { AVATAR_SIZES, avatarSrcSet } from '../lib/base';
 import { UniversalMark } from './Icons';
 
 interface Props {
@@ -39,7 +40,16 @@ export function CharacterGrid({ owners, onOpen }: Props) {
               {isUniversal ? (
                 <UniversalMark side={o.side} />
               ) : o.avatar ? (
-                <img src={o.avatar} alt="" loading="lazy" decoding="async" />
+                /* srcSet + sizes：让人像按「显示宽度 × DPR」挑 96/144/200 三档，
+                   手机首屏从 ~965KB 降到 ~327KB。见 lib/base.ts */
+                <img
+                  src={o.avatar}
+                  srcSet={avatarSrcSet(o.avatar)}
+                  sizes={AVATAR_SIZES}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
               ) : (
                 <span className="char__ph" aria-hidden="true">
                   {o.name.slice(0, 1)}

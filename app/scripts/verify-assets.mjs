@@ -122,6 +122,22 @@ console.log('\n[3] 图片格式');
   else ok('站点图标齐全（favicon / apple-touch-icon / manifest 三档）');
 }
 
+/* ---------- 3b. 人像的响应式变体 ---------- */
+console.log('\n[3b] 人像响应式变体（96w / 144w）');
+{
+  // srcset 里的每一档都必须有真实文件，少一个就是 404 白图
+  const chars = distFiles.filter((f) => web(f).includes('/icons/chars/') && !/@\d+\.webp$/.test(f));
+  const missing = [];
+  for (const f of chars) {
+    const stem = f.replace(/\.webp$/, '');
+    for (const suffix of ['@96.webp', '@144.webp']) {
+      if (!fs.existsSync(stem + suffix)) missing.push(rel(stem + suffix));
+    }
+  }
+  if (missing.length) bad(`${missing.length} 个变体缺失（跑 npm run gen:portrait-sizes）：${missing.slice(0, 4).join(', ')}`);
+  else ok(`${chars.length} 张母版都有 @96 / @144 两档`);
+}
+
 /* ---------- 4. 数据自洽 ---------- */
 console.log('\n[4] 数据一致性');
 {
