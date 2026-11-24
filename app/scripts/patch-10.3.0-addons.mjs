@@ -307,8 +307,10 @@ if (missing.length) {
   process.exit(1);
 }
 
-/* 按稀有度→名称排序，和 wiki 表格一致的观感 */
-const order = { common: 0, uncommon: 1, rare: 2, 'very-rare': 3, ultra: 4 };
+/* 按稀有度**降序**排：非凡 → 非常稀有 → 稀有 → 精良 → 普通。
+   这和站内其它角色的分包一致（k-01/k-07/k-20 都是 ultra 打头），
+   也是游戏内附加品列表的顺序 —— 之前写成升序，导致断魂小丑的配件整个倒过来。 */
+const order = { ultra: 0, 'very-rare': 1, rare: 2, uncommon: 3, common: 4 };
 entries.sort((x, y) => order[x.rarity] - order[y.rarity] || x.titleEn.localeCompare(y.titleEn));
 indexEntries.sort((x, y) => order[x.rarity] - order[y.rarity] || x.title.localeCompare(y.title));
 
