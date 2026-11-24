@@ -1,6 +1,6 @@
 # 迷雾工具箱 · app
 
-自用的《黎明杀机》中文工具站。移动端优先，部署 Cloudflare Pages。
+自用的《黎明杀机》中文工具站。移动端优先，部署 **GitHub Pages**（`dbd.howerlin.top`）。
 
 方案文档：`../docs/dbd-tool-site-plan.md`
 设计稿：`../design/ui-draft-v9-final.html`
@@ -37,7 +37,7 @@ npm run to:webp     # 存量 PNG → WebP 迁移（一次性，可重复跑）
 | 内容 | 来源 | 授权 |
 |---|---|---|
 | 技能 / 配件的**中文文本、稀有度、归属** | [迷雾笔记 dbdwiki.com](https://dbdwiki.com) 的公开 JSON | **CC BY-NC-SA 4.0** |
-| **图标**（1201 个）与**角色头像**（97 个） | [deadbydaylight.wiki.gg](https://deadbydaylight.wiki.gg) | 游戏素材，权利归 Behaviour |
+| **图标**（1227 个）与**角色头像**（99 个） | [deadbydaylight.wiki.gg](https://deadbydaylight.wiki.gg) | 游戏素材，权利归 Behaviour |
 
 **为什么不用 wiki.gg 的数据表**：wiki.gg 只有 de/es/fr/it/pl，**没有中文**，
 `Module:Datatable` 全英文。中文内容只能另找来源。
@@ -53,16 +53,23 @@ npm run to:webp     # 存量 PNG → WebP 迁移（一次性，可重复跑）
 scripts/
 ├─ import-dbd.mjs        主导入：文本数据 + 图标下载（下载即转 WebP）
 ├─ import-portraits.mjs  角色头像（走英文名 + wiki 重定向），同样直接产出 WebP
-├─ crop-frames.mjs       裁掉卡片框的透明留白，输出无损 WebP
+├─ crop-frames.mjs       裁掉卡片框的透明留白，输出无损 WebP → src/assets/card/
 ├─ to-webp.mjs           存量 PNG → WebP 迁移 + 数据路径改写（一次性/可重复）
 ├─ verify-assets.mjs     产物自检（引用完整性 / 数据自洽 / 体积）
+├─ fetch-addon-en-names.mjs   901 条配件的英文名回填
+├─ patch-10.3.0-*.mjs    10.3.0 手工补丁（幂等，见「已知数据缺口」）
 └─ assets/card-source/   **构建期素材**（3 张 wiki 背景 webp），不参与部署
 
 src/
-├─ main.tsx            路由（hash）+ 挂载
+├─ main.tsx            路由（hash）+ 首帧阵营判定 + 挂载
 ├─ types.ts            Entry / Owner 类型与展示常量
 ├─ data/api.ts          数据加载（内存缓存 + SPA 回退兜底）
-├─ lib/search.ts        中文名 / 英文名 / 全拼 / 首字母匹配 + 多选筛选 AND
+├─ lib/
+│  ├─ search.ts         中文名 / 英文名 / 全拼 / 首字母匹配 + 多选筛选 AND
+│  ├─ rarity.ts         稀有度 → CSS 变量
+│  ├─ highlight.tsx     描述正文里的数值高亮
+│  ├─ base.ts           `asset()`：子路径部署时补前缀（现在 base='/', 是 no-op）
+│  └─ splash.ts         首屏加载动画的淡出（最短展示一个循环）
 ├─ pages/Browse.tsx     角色总览 / 钻取 / 搜索 三种状态
 ├─ components/
 │  ├─ TopBar.tsx        顶栏（含返回与搜索）+ 底部 2 Tab
@@ -71,17 +78,19 @@ src/
 │  ├─ DetailSheet.tsx   可拖拽底部抽屉
 │  ├─ SearchBar.tsx     搜索态顶栏
 │  └─ Icons.tsx         UI 图标 + 无图时的占位形状
+├─ assets/card/         卡片框两张（frame-killer / frame-survivor，无损 WebP）
 └─ styles/
-   ├─ tokens.css        设计令牌（颜色/尺寸唯一来源）
-   └─ app.css           组件样式
+   ├─ tokens.css        设计令牌（颜色/尺寸唯一来源，含阵营主题色）
+   └─ app.css           组件样式（移动端基线 + ≥900px 桌面覆盖）
 
 public/
-├─ _redirects           Cloudflare Pages：SPA 回退
-├─ _headers             三档缓存策略（见「部署」一节）
+├─ CNAME                GitHub Pages 自定义域名（**不能删**）
 ├─ data/                导入产物（owners / perks / addons / addons-index）
-├─ icons/               1201 个条目图标（128px，WebP）
-├─ icons/chars/         97 个角色抠图（200×200，WebP）
-└─ icons/card/          卡片框（198×241，无损 WebP）
+├─ icons/               1227 个条目图标（WebP）
+├─ icons/chars/         99 个角色抠图（200×200，WebP）
+├─ manifest.webmanifest + favicon.svg / favicon-*.png / icon-*.png / apple-touch-icon.png
+└─ （`_headers` / `_redirects` 是 Cloudflare 时代的遗留，已删除；
+      GitHub Pages 不发自定义响应头，想要长缓存只能上 SW 或反代）
 ```
 
 > `scripts/assets/card-source/` 里的三张背景 webp 只用来烘焙卡片框。
@@ -241,8 +250,8 @@ wiki 只提供 PNG，1300 张透明图合计 **20.7MB**。杀手总览一次要�
 
 | 素材 | 数量 | 参数 | 相对 PNG | 实测差异（只统计 alpha≥16 的可见像素） |
 |---|---|---|---|---|
-| 条目图标 128px | 1201 | `nearLossless` | −28% | 最大色差 **2** |
-| 角色抠图 200px | 97 | `nearLossless` | −63% | 最大色差 **2** |
+| 条目图标 128px | 1227 | `nearLossless` | −28% | 最大色差 **2** |
+| 角色抠图 200px | 99 | `nearLossless` | −63% | 最大色差 **2** |
 | 卡片框 198×241 | 2 | `lossless` | −41% | **0**（解码后逐字节一致） |
 
 **为什么都不用普通有损（q92）**：实测过，两个独立的原因 ——
@@ -331,19 +340,21 @@ wiki 只提供 PNG，1300 张透明图合计 **20.7MB**。杀手总览一次要�
 - [x] 角色卡按下只做轻微收缩（`scale .95`，0.16s）；**没有红色高亮**（长按时红框会一直挂着，与选中态混淆，已移除）
 - [x] **真实数据**：330 条技能（含迈尔斯补齐的 3 条）+ **901 个配件** + 99 位角色
 - [x] **真实图标**：**1227** 个条目图标（1201 原有 + 断魂小丑 20 附加品 + 6 技能）+ **99 个角色抠图**
-- [x] 构建：JS gzip **105KB**（预算 150KB）
+- [x] 构建：JS **326KB**（gzip **105KB**，预算 150KB）
 
 **优化轮（W3 之后、W4 之前）**
 
-- [x] **图片全部转 WebP**：20.69MB → **10.25MB**，且分三档参数（图标/人像 nearLossless、卡片框无损）
+- [x] **图片全部转 WebP**：20.69MB → 约 **10.7MB**（现在是 10.68MB，含 10.3.0 新增素材），
+      且分三档参数（图标/人像 nearLossless、卡片框无损）
 - [x] 卡片框三张构建期源图移出 `public/`，部署不再白带 467KB
-- [x] 新增 `public/_headers`：`/assets` 长缓存 immutable、`/icons` 7 天、`/data` 10 分钟
+- [x] ~~新增 `public/_headers`~~：Cloudflare 时代的东西，迁到 GitHub Pages 后已删除（那边不支持自定义响应头）
 - [x] 删掉 `gen-seed-data.mjs` —— 它会往 `public/data` 写同路径的种子数据，一条命令就能覆盖真实数据
 - [x] 搜索：去掉每次按键对 881 条正文重复跑 `normText`（构建期已归一化）
 - [x] 搜索：`crossHits` 与 `crossHitTotal` 合并成一次遍历
 - [x] 导入脚本：下载即转 WebP，路径与落盘扩展名统一由 `iconPath()` 决定，不会翻回 `.png`
 - [x] 新增 `npm run verify`：引用完整性 / 数据自洽 / 体积自检
-- [x] 产物 **21.96MB → 11.54MB**；首次打开杀手总览 ≈ **1.1MB**（原 ~2.9MB），杀手详情页 ≈ 0.54MB
+- [x] 产物 **21.96MB → 11.91MB**（1390 个文件）；首次打开杀手总览 ≈ **1.09MB**
+      （JS 326 + CSS 21 + owners 18 + 首屏 30 张人像 722 + 卡片框 35），杀手详情页 ≈ 0.55MB
 
 **部署轮**
 
@@ -372,6 +383,22 @@ wiki 只提供 PNG，1300 张透明图合计 **20.7MB**。杀手总览一次要�
 - [x] 相关脚本：`fetch-chapter-terrifier.mjs` / `patch-10.3.0-data.mjs` /
       `patch-10.3.0-addons.mjs` / `fetch-addon-en-names.mjs`（均幂等，
       迷雾笔记跟上后 `npm run import` 会覆盖）
+
+**视觉与首屏轮（W4 之前）**
+
+- [x] **阵营主题色**：杀手血红 `#b32020` / 逃生者雾蓝 `#2f6ea8`，靠 `html[data-side='survivor']`
+      覆盖 `--accent` / `--glow-*` 一族，组件里不判断阵营；`main.tsx` 在 render 前按 hash 先判一次，
+      深链接不闪红（见「阵营主题色」一节）
+- [x] 主题色落到：顶栏副标题、顶栏/搜索框底部 1px 渐变线、底部 Tab 的光带、桌面端两侧 gutter 光晕
+- [x] **底部 Tab 滑动光带**：`.tabbar::before` 半宽底 `translateX` 滑动 `.42s` + `::after` 26px 余晖跟随；
+      桌面端**完全沿用移动端**（满宽、两个 Tab 各占一半），只放大图标/字号
+- [x] 角色页搜索占位改用真实角色名（「搜设陷者的技能、配件或效果」），概览页回退到通用文案
+- [x] **桌面端可读性**：搜索结果条目放大（缩略 54px、标题 18px）、全站小字逐处提一档、
+      抽屉 640 → **720px**、正文 15.5px（见「网页端适配」一节的字号对照表）
+- [x] **首屏加载动画**：DBD 那个「四条竖线 + 一条斜线」的计数划痕，五条笔画依次划上，
+      内联在 `index.html`（零外部请求、无白闪），并把 `html` 底色一并内联；
+      最短展示一个完整循环（2.4s）再淡出（见「首屏加载动画」一节）
+- [x] 人像响应式三版全部回退，统一 **200px nearLossless** 母版（画质优先）
 
 ## 已知数据缺口
 
@@ -419,7 +446,7 @@ iPad 横屏 1180px 才切桌面。
 | 抽屉 | 满宽贴底 | `max-width: 720px` 居中卡片，仍从底部滑入 |
 | 底部信息 | 跟在角色网格后面 | 内容不满一屏时用 `margin-top: auto` **贴到容器下沿** |
 | 字号 | 正文 13.5px / 小字 10~11.5px | 正文 15.5px（抽屉）/ 18px（搜索结果）｜顶栏标题 19px、详情标题 21px｜小字统一提一档 |
-| 焦点 | — | `:focus-visible` 红色描边（触摸不会触发，对手机无影响） |
+| 焦点 | — | `:focus-visible` 强调色描边（跟随阵营，触摸不会触发，对手机无影响） |
 | 悬停 | — | 卡片描边、图标格上浮 2px、行底色、链接变亮 |
 
 **字号为什么要单独提一档**：桌面的视距比手机远得多，手机上「一眼扫过」的
@@ -549,7 +576,7 @@ wiki 的染色参数是 `sepia(1) saturate(30) hue-rotate(289.1deg) saturate(7) 
 （`K41 TheKrasue` … `K45 TheTerrifier`、`S43 LaraCroft` … `S55 SiennaShaw`）。
 分类里只有 76 个，最新那批完全没有 —— 这就是之前 21 位对不上的真正原因。
 
-匹配结果：**97/97 全部命中**，无一位走降级。
+匹配结果：**99/99 全部命中**（含 10.3.0 新增的断魂小丑与西耶娜·肖），无一位走降级。
 
 ## 阵营主题色：屠夫红 / 逃生者蓝
 
