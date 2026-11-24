@@ -1,0 +1,35 @@
+{
+  "name": "dbd-tool",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-isolation=none --experimental-strip-types tests/search.test.ts",
+    "verify": "node scripts/verify-assets.mjs",
+    "import": "node scripts/import-dbd.mjs && node scripts/import-portraits.mjs",
+    "import:no-icons": "node scripts/import-dbd.mjs --no-icons",
+    "import:portraits": "node scripts/import-portraits.mjs",
+    "to:webp": "node scripts/to-webp.mjs",
+    "gen:icons": "node scripts/gen-icons.mjs",
+    "check": "npm run typecheck && npm test && npm run build && npm run verify",
+    "deploy": "npm run build && npm run verify && npx --yes wrangler@4 pages deploy dist --project-name=dbd-tool"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "pinyin-pro": "^3.29.5",
+    "sharp": "^0.35.5",
+    "typescript": "^5.7.0",
+    "vite": "^8.3.8"
+  }
+}

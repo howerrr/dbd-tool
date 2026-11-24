@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0c" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="《黎明杀机》中文速查工具：角色、技能、配件与效果搜索。个人自用，非官方。"
+    />
+    <!-- 数值是站内的重要内容（「32 米」「30 秒」），关掉 iOS 的自动电话号码识别，
+         否则个别数字串会被识别成 tel: 链接并染成蓝色 -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <title>迷雾工具箱</title>
+
+    <!-- 图标：现代浏览器用矢量，其余走 PNG。
+         带 <link rel="icon"> 后浏览器就不会再去请求 /favicon.ico，避免 404 -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- 添加到主屏后以全屏 Web App 运行；black-translucent 让内容延伸到状态栏下方，
+         配合 CSS 里的 env(safe-area-inset-*) 才不会被刘海压住 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="迷雾" />
+    <meta name="mobile-web-app-capable" content="yes" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

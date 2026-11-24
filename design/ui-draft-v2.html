@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="zh-CN" data-accent="blood" data-perkcols="4">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>迷雾工具箱 · UI 设计稿 v2</title>
+<!--
+  ============================================================
+  迷雾工具箱 · UI 设计稿 v2
+  ------------------------------------------------------------
+  v2 变更（依据评审结论）：
+    · 色调锁定「血」#B32020，移除色调切换
+    · 图标框不再全局切换，改为按内容类型固定：
+        技能(perk)          → 菱形  ◆
+        配件/物品(addon)    → 斜切  ⬡
+    · 新增：技能页网格列数 4/5 可切换（菱形需要更多空间）
+    · 新增：底部 4 个 Tab 全部可交互，各自拥有独立的角色条与数据
+    · 新增说明：技能无稀有度，故菱形框不带稀有度色条
+  ============================================================
+-->
+<style>
+/* ============ 设计令牌 ============ */
+:root{
+  --bg:#0a0a0c;
+  --elev1:#101014;
+  --elev2:#16161b;
+  --elev3:#1e1e25;
+  --line:rgba(232,226,214,.075);
+  --line2:rgba(232,226,214,.14);
+  --line3:rgba(232,226,214,.24);
+
+  --ink:#e8e2d6;
+  --ink-dim:#8f897d;
+  --ink-faint:#5c584f;
+
+  --accent:#b32020;
+  --accent-soft:rgba(179,32,32,.14);
+  --accent-ring:rgba(179,32,32,.45);
+
+  --r-common:#8b6b45;
+  --r-uncommon:#b8a03c;
+  --r-rare:#3f8f5f;
+  --r-vrare:#7a4fa8;
+  --r-ultra:#c2397a;
+
+  --font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+  --font-serif:"Noto Serif SC","Songti SC","Source Han Serif SC",Georgia,serif;
+
+  --tab-h:56px;
+  --cols-addon:5;
+  --cols-perk:4;
+}
+html[data-perkcols="5"]{ --cols-perk:5 }
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font-sans);background:#060608;color:var(--ink);
+  min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+  gap:40px;padding:40px 24px;-webkit-font-smoothing:antialiased;
+}
+
+/* ============ 评审面板 ============ */
+.review{width:290px;flex:none;position:sticky;top:40px}
+.review h1{font-family:var(--font-serif);font-size:19px;font-weight:600;letter-spacing:.06em;margin-bottom:6px}
+.review .sub{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px}
+.review__note{font-size:12px;line-height:1.75;color:var(--ink-dim);border-left:2px solid var(--line2);padding-left:12px;margin-bottom:22px}
+
+.locked{
+  border:1px solid var(--line);border-radius:6px;background:var(--elev1);
+  padding:13px 14px;margin-bottom:22px;
+}
+.locked__h{
+  font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);
+  margin-bottom:11px;display:flex;justify-content:space-between;align-items:center;
+}
+.locked__h b{color:var(--accent);font-weight:600;font-size:9px;letter-spacing:.1em}
+.rule{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.rule:last-child{margin-bottom:0}
+.rule__shape{width:34px;height:34px;flex:none;position:relative;display:grid;place-items:center}
+.rule__shape svg{width:13px;height:13px;stroke:var(--ink-dim);fill:none;stroke-width:1.6}
+.rule__txt{font-size:11.5px;line-height:1.45;color:var(--ink-dim)}
+.rule__txt b{color:var(--ink);font-weight:600;display:block;font-size:12px;margin-bottom:1px}
+
+.ctrl{margin-bottom:20px}
+.ctrl__label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{
+  flex:1 1 auto;min-width:64px;background:var(--elev1);border:1px solid var(--line);
+  color:var(--ink-dim);font-size:12px;font-family:inherit;padding:8px 10px;border-radius:4px;
+  cursor:pointer;transition:.16s;white-space:nowrap;
+}
+.seg button:hover{border-color:var(--line3);color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent-ring);color:var(--ink)}
+
+.tokens{display:flex;flex-direction:column;gap:7px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.tok{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--ink-faint)}
+.tok i{width:13px;height:13px;border-radius:3px;flex:none;border:1px solid rgba(255,255,255,.12)}
+
+/* ============ 手机外框 ============ */
+.phone{
+  width:390px;height:844px;flex:none;background:#000;border-radius:46px;padding:9px;
+  box-shadow:0 50px 130px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.07);
+}
+.app{
+  position:relative;width:100%;height:100%;border-radius:37px;overflow:hidden;
+  background:var(--bg);display:flex;flex-direction:column;isolation:isolate;
+}
+.app::before{
+  content:'';position:absolute;inset:0;z-index:70;pointer-events:none;
+  background:radial-gradient(130% 75% at 50% -10%, transparent 35%, rgba(0,0,0,.6) 100%);
+}
+.app::after{
+  content:'';position:absolute;inset:0;z-index:71;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============ 顶栏 ============ */
+.topbar{
+  flex:none;padding:14px 16px 10px;
+  background:linear-gradient(180deg, rgba(10,10,12,.96), rgba(10,10,12,.88));
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);z-index:20;
+}
+.topbar__row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.title-wrap{display:flex;flex-direction:column;gap:3px;min-width:0}
+.title{font-family:var(--font-serif);font-size:17px;font-weight:600;letter-spacing:.1em;line-height:1.1}
+.title-en{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.acts{display:flex;gap:4px;flex:none}
+.iconbtn{
+  width:38px;height:38px;display:grid;place-items:center;background:none;
+  border:1px solid transparent;border-radius:4px;color:var(--ink-dim);cursor:pointer;
+  transition:.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.iconbtn:hover{color:var(--ink);border-color:var(--line);background:var(--elev1)}
+.iconbtn:active{background:var(--elev2);transform:scale(.94)}
+.iconbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============ 角色条 ============ */
+.ownerstrip{flex:none;position:relative;z-index:19;border-bottom:1px solid var(--line);background:rgba(10,10,12,.92)}
+.ownerstrip__scroll{
+  display:flex;gap:2px;overflow-x:auto;padding:10px 8px 8px;
+  scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+}
+.ownerstrip__scroll::-webkit-scrollbar{display:none}
+.ownerstrip::before,.ownerstrip::after{content:'';position:absolute;top:0;bottom:0;width:22px;z-index:2;pointer-events:none}
+.ownerstrip::before{left:0;background:linear-gradient(90deg,#0a0a0c,transparent)}
+.ownerstrip::after{right:0;background:linear-gradient(270deg,#0a0a0c,transparent)}
+.owner{
+  flex:none;width:58px;display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:5px 0 3px;background:none;border:0;cursor:pointer;font-family:inherit;
+  scroll-snap-align:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.owner__av{
+  width:42px;height:42px;border-radius:50%;background:var(--elev3);
+  border:1.5px solid var(--line2);display:grid;place-items:center;color:var(--ink-faint);transition:.18s;
+}
+.owner__av svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.owner__nm{
+  font-size:10px;color:var(--ink-faint);letter-spacing:.02em;max-width:58px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:.18s;
+}
+.owner[aria-pressed="true"] .owner__av{
+  border-color:var(--accent);color:var(--ink);background:var(--elev2);
+  box-shadow:0 0 0 3px var(--accent-soft), 0 4px 14px rgba(0,0,0,.6);
+}
+.owner[aria-pressed="true"] .owner__nm{color:var(--ink);font-weight:600}
+.owner:active .owner__av{transform:scale(.92)}
+
+/* ============ 主区 ============ */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;position:relative}
+
+.grid{display:grid;gap:12px 8px;padding:14px 14px 24px;grid-template-columns:repeat(var(--cols-addon),1fr)}
+.grid[data-kind="perk"]{
+  grid-template-columns:repeat(var(--cols-perk),1fr);
+  gap:15px 10px;
+}
+
+.cell{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:none;border:0;padding:0;cursor:pointer;font-family:inherit;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.cell__frame{position:relative;width:100%;aspect-ratio:1;display:block;background:var(--elev2);transition:.16s}
+.cell__nm{
+  font-size:9.5px;line-height:1.35;color:var(--ink-dim);text-align:center;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%;
+}
+.cell:active .cell__frame{transform:scale(.94)}
+.cell:active .cell__nm{color:var(--ink)}
+
+/* ---------- 斜切：配件 / 物品 ---------- */
+.cell[data-kind="addon"] .cell__frame{
+  background:var(--line2);padding:1px;
+  clip-path:polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+}
+.cell[data-kind="addon"] .cell__frame-in{
+  position:absolute;inset:0;background:var(--elev2);
+  clip-path:polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+}
+/* 稀有度 2px 色条，跟着斜切角一起裁 */
+.cell[data-kind="addon"] .cell__frame::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:var(--rarity,transparent);opacity:.85;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, calc(100% - 5px) 100%, 0 100%);
+}
+.cell[data-kind="addon"] .cell__ic{position:absolute;inset:20%;display:grid;place-items:center;color:var(--ink-faint)}
+.cell[data-kind="addon"] .cell__ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- 菱形：技能 ---------- */
+.cell[data-kind="perk"] .cell__frame{background:none}
+.cell[data-kind="perk"] .cell__frame::before{
+  content:'';position:absolute;inset:14.6%;
+  transform:rotate(45deg);
+  background:var(--elev2);
+  border:1px solid var(--line2);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.65), 0 2px 10px rgba(0,0,0,.5);
+  transition:.16s;
+}
+/* 技能无稀有度 → 菱形框不带色条，改为四角点缀 */
+.cell[data-kind="perk"] .cell__frame::after{
+  content:'';position:absolute;inset:14.6%;transform:rotate(45deg);
+  border:1px solid transparent;
+  border-top-color:var(--accent);border-bottom-color:var(--accent);
+  opacity:0;transition:.2s;
+}
+.cell[data-kind="perk"]:active .cell__frame::after{opacity:.9}
+.cell[data-kind="perk"] .cell__ic{
+  position:absolute;inset:28%;display:grid;place-items:center;color:var(--ink-faint);
+}
+.cell[data-kind="perk"] .cell__ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============ 底部 Tab ============ */
+.tabbar{
+  flex:none;display:flex;height:calc(var(--tab-h) + env(safe-area-inset-bottom,0px));
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:rgba(12,12,15,.94);backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);z-index:25;
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:0;cursor:pointer;font-family:inherit;color:var(--ink-faint);
+  position:relative;transition:.16s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tab span{font-size:9.5px;letter-spacing:.04em}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:22px;height:2px;background:var(--accent);box-shadow:0 0 10px var(--accent-ring);
+}
+.tab:active{color:var(--ink-dim)}
+
+/* ============ 抽屉 ============ */
+.backdrop{
+  position:absolute;inset:0;z-index:40;background:rgba(0,0,0,.55);
+  opacity:0;pointer-events:none;transition:opacity .28s ease;
+}
+.app[data-sheet="open"] .backdrop{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:50;background:var(--elev1);
+  border-radius:16px 16px 0 0;border-top:1px solid var(--line2);max-height:86%;
+  transform:translateY(101%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.7);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.app[data-sheet="open"] .sheet{transform:translateY(0)}
+.sheet::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:52%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.7;
+}
+.sheet__handle{flex:none;height:22px;display:grid;place-items:center;cursor:grab;touch-action:none}
+.sheet__handle i{width:34px;height:3px;border-radius:2px;background:var(--line3)}
+.sheet__body{overflow-y:auto;padding:4px 20px 28px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
+.detail-head{display:flex;gap:15px;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.detail-head__frame{
+  width:58px;height:58px;flex:none;position:relative;display:grid;place-items:center;color:var(--ink-dim);
+}
+.detail-head__frame svg{width:38%;height:38%;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:2}
+/* 详情头也遵循同一形态规则 */
+.detail-head__frame[data-kind="perk"]::before{
+  content:'';position:absolute;inset:14.6%;transform:rotate(45deg);
+  background:var(--elev2);border:1px solid var(--line2);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.65);
+}
+.detail-head__frame[data-kind="addon"]{
+  background:var(--elev2);border:1px solid var(--line2);
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.detail-head__frame[data-kind="addon"]::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--rarity);
+}
+.detail-head__txt{min-width:0;padding-top:2px}
+.detail-head h2{font-family:var(--font-serif);font-size:19px;font-weight:600;letter-spacing:.05em;line-height:1.25;margin-bottom:4px}
+.detail-head .en{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:10.5px;padding:3px 8px;border-radius:3px;border:1px solid var(--line2);color:var(--ink-dim);letter-spacing:.03em;background:var(--elev2)}
+.chip--rarity{color:var(--rarity);border-color:currentColor;background:transparent;font-weight:600}
+
+.desc{padding-top:18px;font-size:13.5px;line-height:1.85;color:#cdc7ba}
+.desc p{margin-bottom:11px}
+.desc p.bullet{padding-left:15px;position:relative;color:var(--ink-dim);font-size:13px}
+.desc p.bullet::before{content:'';position:absolute;left:3px;top:11px;width:4px;height:4px;border-radius:1px;background:var(--accent);opacity:.8}
+.desc mark{background:none;color:var(--ink);font-weight:600;border-bottom:1px solid var(--accent-ring)}
+.statline{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 2px}
+.stat{font-size:10.5px;letter-spacing:.04em;padding:4px 9px;border-radius:3px;border:1px solid var(--line);background:var(--elev2);color:var(--ink-dim)}
+.flavor{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--font-serif);font-size:12.5px;line-height:1.9;color:var(--ink-faint);font-style:italic}
+
+/* ============ 搜索 ============ */
+.searchbar{display:none;flex:none;padding:10px 14px 12px;border-bottom:1px solid var(--line);background:rgba(10,10,12,.96)}
+.app[data-screen="search"] .searchbar{display:block}
+.app[data-screen="search"] .ownerstrip{display:none}
+.app[data-screen="search"] .grid{display:none}
+.field{display:flex;align-items:center;gap:9px;background:var(--elev2);border:1px solid var(--line2);border-radius:5px;padding:0 11px;height:40px}
+.field svg{width:16px;height:16px;stroke:var(--ink-faint);fill:none;stroke-width:1.8;stroke-linecap:round}
+.field input{flex:1;background:none;border:0;outline:none;color:var(--ink);font-size:16px;font-family:inherit}
+.field input::placeholder{color:var(--ink-faint);font-size:14px}
+
+.results{display:none;padding:6px 0 24px}
+.app[data-screen="search"] .results{display:block}
+.res{
+  display:flex;align-items:center;gap:13px;width:100%;padding:10px 16px;
+  background:none;border:0;border-bottom:1px solid var(--line);font-family:inherit;
+  cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;
+}
+.res:active{background:var(--elev1)}
+.res__frame{width:40px;height:40px;flex:none;position:relative;display:grid;place-items:center;color:var(--ink-faint)}
+.res__frame svg{width:38%;height:38%;stroke:currentColor;fill:none;stroke-width:1.5;position:relative;z-index:2}
+.res__frame[data-kind="perk"]::before{content:'';position:absolute;inset:14.6%;transform:rotate(45deg);background:var(--elev2);border:1px solid var(--line)}
+.res__frame[data-kind="addon"]{background:var(--elev2);border:1px solid var(--line);clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.res__frame[data-kind="addon"]::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--rarity)}
+.res__txt{min-width:0;flex:1}
+.res__t{font-size:13.5px;color:var(--ink);margin-bottom:2px}
+.res__s{font-size:11px;color:var(--ink-faint);letter-spacing:.02em}
+.res__s em{color:var(--accent);font-style:normal}
+
+.empty{display:none;flex-direction:column;align-items:center;justify-content:center;padding:70px 30px;text-align:center;gap:14px}
+.app[data-screen="search"] .empty{display:flex}
+.empty__ic{width:52px;height:52px;color:var(--ink-faint);opacity:.5}
+.empty__ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.2}
+.empty__t{font-family:var(--font-serif);font-size:14px;letter-spacing:.08em;color:var(--ink-dim)}
+.empty__s{font-size:11.5px;line-height:1.8;color:var(--ink-faint)}
+
+/* ============ 收藏 ============ */
+.fav{display:none;padding:14px 14px 24px}
+.app[data-screen="fav"] .grid{display:none}
+.app[data-screen="fav"] .fav{display:block}
+.fav__h{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 14px}
+
+@media (max-width:760px){
+  body{padding:0;display:block}
+  .review{display:none}
+  .phone{width:100%;height:100dvh;border-radius:0;padding:0}
+  .app{border-radius:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 评审面板 ============ -->
+<aside class="review">
+  <h1>迷雾工具箱</h1>
+  <div class="sub">UI Design Draft · v2</div>
+  <p class="review__note">
+    可交互设计稿。底部四个 Tab 都能点，角色条、抽屉、搜索都可操作。<br><br>
+    条目名称为<strong style="color:var(--ink-dim)">示意数据</strong>，用于验证排版密度；技能与所属角色的对应关系为占位。
+  </p>
+
+  <div class="locked">
+    <div class="locked__h"><span>已锁定</span><b>BLOOD</b></div>
+    <div class="rule">
+      <span class="rule__shape" style="--rarity:transparent">
+        <span style="position:absolute;inset:14.6%;transform:rotate(45deg);background:var(--elev2);border:1px solid var(--line2)"></span>
+        <svg viewBox="0 0 24 24" style="position:relative;z-index:2"><path d="M12 3l3 6 6 1-4.5 4.4 1 6.6-5.5-3-5.5 3 1-6.6L3 10l6-1z"/></svg>
+      </span>
+      <span class="rule__txt"><b>技能 → 菱形</b>无稀有度色条</span>
+    </div>
+    <div class="rule">
+      <span class="rule__shape">
+        <span style="position:absolute;inset:0;background:var(--line2);clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)"></span>
+        <span style="position:absolute;inset:1px;background:var(--elev2);clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)"></span>
+        <span style="position:absolute;left:1px;right:1px;bottom:1px;height:2px;background:var(--r-rare);clip-path:polygon(0 0,100% 0,100% 100%,calc(100% - 5px) 100%,0 100%)"></span>
+        <svg viewBox="0 0 24 24" style="position:relative;z-index:2;width:12px;height:12px;stroke:var(--ink-dim);fill:none;stroke-width:1.6"><circle cx="12" cy="12" r="6"/></svg>
+      </span>
+      <span class="rule__txt"><b>配件 / 物品 → 斜切</b>底部 2px 稀有度色条</span>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <div class="ctrl__label">屏幕</div>
+    <div class="seg" data-group="screen">
+      <button data-v="grid" aria-pressed="true">网格</button>
+      <button data-v="search" aria-pressed="false">搜索</button>
+      <button data-v="fav" aria-pressed="false">收藏</button>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <div class="ctrl__label">技能网格列数</div>
+    <div class="seg" data-group="perkcols">
+      <button data-v="4" aria-pressed="true">4 列</button>
+      <button data-v="5" aria-pressed="false">5 列</button>
+    </div>
+  </div>
+
+  <div class="tokens">
+    <div class="tok"><i style="background:#0a0a0c"></i>背景 #0A0A0C</div>
+    <div class="tok"><i style="background:#16161b"></i>浮层 #16161B</div>
+    <div class="tok"><i style="background:#e8e2d6"></i>骨白 #E8E2D6</div>
+    <div class="tok"><i style="background:#b32020"></i>强调 #B32020</div>
+    <div class="tok"><i style="background:#8b6b45"></i>普通</div>
+    <div class="tok"><i style="background:#b8a03c"></i>精良</div>
+    <div class="tok"><i style="background:#3f8f5f"></i>稀有</div>
+    <div class="tok"><i style="background:#7a4fa8"></i>非常稀有</div>
+    <div class="tok"><i style="background:#c2397a"></i>非凡</div>
+  </div>
+</aside>
+
+<!-- ============ 手机 ============ -->
+<div class="phone">
+<div class="app" id="app" data-screen="grid" data-sheet="closed">
+
+  <header class="topbar">
+    <div class="topbar__row">
+      <div class="title-wrap">
+        <div class="title" id="tabTitle">杀手技能</div>
+        <div class="title-en" id="tabTitleEn">Killer Perks</div>
+      </div>
+      <div class="acts">
+        <button class="iconbtn" id="btnSearch" aria-label="搜索">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        </button>
+        <button class="iconbtn" id="btnFav" aria-label="收藏">
+          <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="searchbar">
+    <div class="field">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+      <input id="q" type="search" inputmode="search" enterkeyhint="search" placeholder="技能 / 配件名、拼音或首字母" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="ownerstrip">
+    <div class="ownerstrip__scroll" id="owners"></div>
+  </div>
+
+  <main class="main">
+    <div class="grid" id="grid" data-kind="perk"></div>
+
+    <div class="results" id="results"></div>
+
+    <div class="empty">
+      <div class="empty__ic"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+      <div class="empty__t">雾中无此物</div>
+      <div class="empty__s">换个关键词试试<br>支持中文名、拼音全拼、首字母</div>
+    </div>
+
+    <div class="fav">
+      <div class="fav__h">My Loadout · 我的常用</div>
+      <div class="grid" id="gridFav" style="padding:0" data-kind="addon"></div>
+    </div>
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab" data-tab="killer-perks" aria-selected="true">
+      <svg viewBox="0 0 24 24"><path d="M12 3v7a4 4 0 1 0 4 4"/><circle cx="12" cy="2.6" r="1"/></svg>
+      <span>杀手技能</span>
+    </button>
+    <button class="tab" data-tab="killer-addons" aria-selected="false">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 15h16M9 4v11"/></svg>
+      <span>杀手配件</span>
+    </button>
+    <button class="tab" data-tab="survivor-perks" aria-selected="false">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>人类技能</span>
+    </button>
+    <button class="tab" data-tab="survivor-items" aria-selected="false">
+      <svg viewBox="0 0 24 24"><path d="M4 8h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span>人类物品</span>
+    </button>
+  </nav>
+
+  <div class="backdrop" id="backdrop"></div>
+  <section class="sheet" role="dialog" aria-modal="true" aria-label="条目详情">
+    <div class="sheet__handle"><i></i></div>
+    <div class="sheet__body" id="sheetBody"></div>
+  </section>
+
+</div>
+</div>
+
+<script>
+/* ================= 图标占位 ================= */
+const GLYPHS = [
+  '<path d="M12 4v8"/><path d="M12 12a4 4 0 1 0 4 4"/>',
+  '<path d="M5 5l14 14M19 5L5 19"/>',
+  '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/>',
+  '<path d="M4 9h16M4 15h16M7 9v6M17 9v6"/>',
+  '<path d="M12 3l3 6 6 1-4.5 4.4 1 6.6-5.5-3-5.5 3 1-6.6L3 10l6-1z"/>',
+  '<path d="M6 4v7a6 6 0 0 0 12 0V4"/><path d="M12 17v4"/>',
+  '<path d="M4 12h5l2-5 2 10 2-5h5"/>',
+  '<path d="M9 3v6L5 20h14L15 9V3"/><path d="M8 3h8"/>',
+];
+const svg = (g) => `<svg viewBox="0 0 24 24">${GLYPHS[g % GLYPHS.length]}</svg>`;
+const RV = {common:'--r-common',uncommon:'--r-uncommon',rare:'--r-rare','very-rare':'--r-vrare',ultra:'--r-ultra'};
+const RL = {common:'普通',uncommon:'精良',rare:'稀有','very-rare':'非常稀有',ultra:'非凡'};
+const rv = (r) => r ? `--rarity:var(${RV[r]})` : '';
+
+/* ================= 示意数据 ================= */
+const OWN = (id,name,g) => ({id,name,glyph:g});
+
+/* 杀手技能：通用 + 屠夫 */
+const KILLER_PERKS = {
+  kind:'perk',
+  owners:[OWN('universal','通用',5),OWN('witch','妖巫',2),OWN('huntress','女猎手',3),OWN('cannibal','食人魔',7),
+          OWN('shape','迈克尔',1),OWN('nurse','护士',0),OWN('wraith','幽灵',2),OWN('hillbilly','农场主',4),
+          OWN('trapper','设陷者',1),OWN('nightmare','梦魇',6)],
+  items:[
+    ['厄咒：废墟','Hex: Ruin',0,'uncommon'],
+    ['厄咒：猎手摇篮曲','Hex: Huntress Lullaby',0,'uncommon'],
+    ['绞肉机','Barbecue & Chilli',2,'uncommon'],
+    ['留最好的最后','Save the Best for Last',0,'very-rare'],
+    ['护士的呼唤','Nurse\'s Calling',6,'rare'],
+    ['战栗','Thrilling Tremors',1,'uncommon'],
+    ['无情','Brutal Strength',1,'common'],
+    ['耐力','Enduring',1,'common'],
+    ['现形','Dying Light',3,'very-rare'],
+    ['终局','No Way Out',5,'rare'],
+    ['厄咒：无人能逃','Hex: No One Escapes Death',5,'very-rare'],
+    ['躁动','Agitation',5,'common'],
+    ['恐吓','Distressing',5,'common'],
+    ['兽性','Beast of Prey',4,'uncommon'],
+  ]
+};
+
+/* 杀手配件：设陷者 */
+const KILLER_ADDONS = {
+  kind:'addon',
+  owners:[OWN('universal','通用',5),OWN('trapper','设陷者',1),OWN('wraith','幽灵',2),OWN('hillbilly','农场主',4),
+          OWN('nurse','护士',0),OWN('huntress','女猎手',3),OWN('shape','迈克尔',1),OWN('hag','妖巫',2),
+          OWN('doctor','医生',6),OWN('cannibal','食人魔',7),OWN('nightmare','梦魇',4)],
+  items:[
+    ['生锈弹簧','Rusty Springs',1,'common'],
+    ['锯齿弹簧','Serrated Springs',3,'uncommon'],
+    ['长弹簧','Long Springs',3,'uncommon'],
+    ['焦油瓶','Tar Bottle',2,'rare'],
+    ['张力弹簧','Tension Spring',2,'rare'],
+    ['血染线圈','Bloody Coil',0,'rare'],
+    ['彩虹石','Iridescent Stone',4,'ultra'],
+    ['粗制锯条','Crude Saw',7,'common'],
+    ['深色束带','Dark Strap',6,'uncommon'],
+    ['裂开的弹簧','Cracked Spring',1,'common'],
+    ['锈蚀铁片','Rusted Plate',3,'uncommon'],
+    ['缠线卷','Coil Bundle',5,'rare'],
+    ['铁匠的护手','Smith\'s Gauntlet',2,'very-rare'],
+    ['无名者的笔记','Nameless Notes',6,'uncommon'],
+    ['迷雾结晶','Fog Crystal',4,'very-rare'],
+  ]
+};
+
+/* 人类技能 */
+const SURVIVOR_PERKS = {
+  kind:'perk',
+  owners:[OWN('universal','通用',5),OWN('laurie','劳丽',0),OWN('bill','比尔',6),OWN('claudette','克劳黛特',3),
+          OWN('meg','梅格',4),OWN('jake','杰克·朴',1),OWN('nea','妮娅',2),OWN('adam','亚当',7)],
+  items:[
+    ['果断一击','Decisive Strike',0,'rare'],
+    ['坚不可摧','Unbreakable',0,'very-rare'],
+    ['自我疗愈','Self-Care',2,'uncommon'],
+    ['植物学知识','Botany Knowledge',2,'common'],
+    ['冲刺爆发','Sprint Burst',1,'common'],
+    ['肾上腺素','Adrenaline',4,'uncommon'],
+    ['钢铁意志','Iron Will',0,'common'],
+    ['极限着陆','Balanced Landing',6,'rare'],
+    ['我们能做到','We\'ll Make It',5,'uncommon'],
+    ['自我牺牲','Deliverance',7,'rare'],
+    ['同情心','Empathy',2,'common'],
+    ['同生共死','For the People',3,'very-rare'],
+    ['目标专注','Object of Obsession',5,'very-rare'],
+    ['快速反应','Quick & Quiet',4,'uncommon'],
+  ]
+};
+
+/* 人类物品：角色条 = 物品类别（注意这个差异） */
+const SURVIVOR_ITEMS = {
+  kind:'addon',
+  isCategory:true,
+  owners:[OWN('medkit','医疗箱',3),OWN('toolbox','工具箱',7),OWN('flashlight','手电筒',6),
+          OWN('map','地图',2),OWN('key','万能钥匙',4),OWN('firecracker','烟花',5)],
+  items:[
+    ['护林员医疗箱','Ranger Med-Kit',3,'very-rare'],
+    ['应急医疗箱','Emergency Med-Kit',3,'uncommon'],
+    ['坚固工具箱','Sturdy Toolbox',7,'uncommon'],
+    ['机械师工具箱','Mechanic\'s Toolbox',7,'rare'],
+    ['运动手电筒','Sport Flashlight',6,'rare'],
+    ['老式手电筒','Will O\' Wisp',6,'uncommon'],
+    ['彩虹地图','Rainbow Map',2,'ultra'],
+    ['破碎的钥匙','Broken Key',4,'rare'],
+    ['万能钥匙','Skeleton Key',4,'ultra'],
+    ['烟花','Firecracker',5,'common'],
+    ['节日烟花','Festive Firecracker',5,'rare'],
+  ]
+};
+
+const TABS = {
+  'killer-perks':   {title:'杀手技能', en:'Killer Perks',   data:KILLER_PERKS},
+  'killer-addons':  {title:'杀手配件', en:'Killer Add-ons', data:KILLER_ADDONS},
+  'survivor-perks': {title:'人类技能', en:'Survivor Perks', data:SURVIVOR_PERKS},
+  'survivor-items': {title:'人类物品', en:'Survivor Items', data:SURVIVOR_ITEMS},
+};
+
+/* ================= 渲染 ================= */
+const app = document.getElementById('app');
+let curTab = 'killer-perks';
+let curOwnerIdx = 0;
+
+const cellHTML = (name, glyph, rarity, kind) => `
+  <button class="cell" data-kind="${kind}" data-open="1">
+    <span class="cell__frame" style="${rv(rarity)}">
+      <span class="cell__frame-in"></span>
+      <span class="cell__ic">${svg(glyph)}</span>
+    </span>
+    <span class="cell__nm">${name}</span>
+  </button>`;
+
+function render() {
+  const t = TABS[curTab];
+  const d = t.data;
+  document.getElementById('tabTitle').textContent = t.title;
+  document.getElementById('tabTitleEn').textContent = t.en;
+  document.getElementById('grid').dataset.kind = d.kind;
+
+  document.getElementById('owners').innerHTML = d.owners.map((o, i) => `
+    <button class="owner" aria-pressed="${i === curOwnerIdx}">
+      <span class="owner__av">${svg(o.glyph)}</span>
+      <span class="owner__nm">${o.name}</span>
+    </button>`).join('');
+
+  document.getElementById('grid').innerHTML = d.items
+    .map(([n, e, g, r]) => cellHTML(n, g, r, d.kind)).join('');
+
+  document.querySelectorAll('.tab').forEach(b =>
+    b.setAttribute('aria-selected', String(b.dataset.tab === curTab)));
+  document.getElementById('owners').scrollLeft = 0;
+}
+
+/* 详情抽屉内容 */
+function openDetail(name, en, kind, rarity, ownerName) {
+  const isPerk = kind === 'perk';
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="detail-head">
+      <div class="detail-head__frame" data-kind="${kind}" style="${rv(rarity)}">${svg(4)}</div>
+      <div class="detail-head__txt">
+        <h2>${name}</h2>
+        <div class="en">${en}</div>
+        <div class="meta">
+          ${rarity ? `<span class="chip chip--rarity" style="${rv(rarity)}">${RL[rarity]}</span>` : `<span class="chip">技能</span>`}
+          <span class="chip">${ownerName || '设陷者'}</span>
+        </div>
+      </div>
+    </div>
+    <div class="desc">
+      ${isPerk
+        ? `<p>你拥有一种天生的能力，能在迷雾中嗅到猎物的恐惧。</p>
+           <p class="bullet">当有逃生者在距离你 <mark>24 米</mark> 内被击倒时，你的移动速度提升 <mark>5%</mark>。</p>
+           <p class="bullet">该效果持续 <mark>10 秒</mark>，冷却时间 <mark>60 秒</mark>。</p>`
+        : `<p>一股奇异的力量在这件物品中流转。它不属于这里，却被迷雾送到了这里。</p>
+           <p class="bullet">每 <mark>30 秒</mark>，一件已设置但未被触发的装置会随机移动到环境中另一处可放置的位置。</p>
+           <p class="bullet">移动时不会发出声音，也不会显示出任何气场。</p>
+           <p class="bullet">若环境中已无可用位置，则效果不会触发。</p>`}
+    </div>
+    <div class="statline">
+      <span class="stat">无法侦测</span>
+      <span class="stat">气场</span>
+      <span class="stat">可叠加</span>
+    </div>
+    <div class="flavor">「它从迷雾里捡回来的东西，没人知道原来属于谁。」</div>`;
+  app.dataset.sheet = 'open';
+}
+
+/* ================= 交互 ================= */
+document.addEventListener('click', (e) => {
+  const cell = e.target.closest('.cell');
+  if (cell) {
+    const kind = TABS[curTab].data.kind;
+    const nm = cell.querySelector('.cell__nm').textContent;
+    const idx = [...cell.parentElement.children].indexOf(cell);
+    const item = TABS[curTab].data.items[idx];
+    openDetail(nm, item ? item[1] : '', kind, item ? item[3] : null, '设陷者');
+    return;
+  }
+  if (e.target.closest('.res')) {
+    openDetail('厄咒：猎手摇篮曲', 'Hex: Huntress Lullaby', 'perk', 'uncommon', '女猎手');
+  }
+});
+
+document.getElementById('backdrop').addEventListener('click', () => app.dataset.sheet = 'closed');
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') app.dataset.sheet = 'closed'; });
+
+/* 抽屉拖拽 */
+(() => {
+  const sheet = document.querySelector('.sheet');
+  const handle = document.querySelector('.sheet__handle');
+  let sy = 0, dy = 0, on = false;
+  handle.addEventListener('pointerdown', (e) => {
+    on = true; sy = e.clientY; dy = 0; sheet.style.transition = 'none';
+    handle.setPointerCapture?.(e.pointerId);
+  });
+  handle.addEventListener('pointermove', (e) => {
+    if (!on) return;
+    dy = Math.max(0, e.clientY - sy);
+    sheet.style.transform = `translateY(${dy}px)`;
+  });
+  const up = () => {
+    if (!on) return;
+    on = false; sheet.style.transition = ''; sheet.style.transform = '';
+    if (dy > 90) app.dataset.sheet = 'closed';
+  };
+  handle.addEventListener('pointerup', up);
+  handle.addEventListener('pointercancel', up);
+})();
+
+/* 角色条 */
+document.getElementById('owners').addEventListener('click', (e) => {
+  const btn = e.target.closest('.owner');
+  if (!btn) return;
+  curOwnerIdx = [...btn.parentElement.children].indexOf(btn);
+  btn.parentElement.querySelectorAll('.owner').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  btn.setAttribute('aria-pressed', 'true');
+  btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+});
+
+/* Tab */
+document.getElementById('tabbar').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  curTab = btn.dataset.tab; curOwnerIdx = 0;
+  app.dataset.screen = 'grid';
+  render();
+});
+
+/* 顶部按钮 */
+document.getElementById('btnSearch').addEventListener('click', () => {
+  app.dataset.screen = app.dataset.screen === 'search' ? 'grid' : 'search';
+  if (app.dataset.screen === 'search') setTimeout(() => document.getElementById('q').focus(), 60);
+});
+document.getElementById('btnFav').addEventListener('click', () => {
+  app.dataset.screen = app.dataset.screen === 'fav' ? 'grid' : 'fav';
+});
+
+/* 搜索演示 */
+document.getElementById('q').addEventListener('input', (e) => {
+  const v = e.target.value.trim();
+  const empty = document.querySelector('.empty');
+  const res = document.getElementById('results');
+  const none = v && ![TABS[curTab].data.items.some(i => i[0].includes(v) || i[1].toLowerCase().includes(v.toLowerCase()))];
+  empty.style.display = none ? 'flex' : 'none';
+  res.style.display = none ? 'none' : 'block';
+});
+
+/* 搜索结果 */
+document.getElementById('results').innerHTML = TABS['killer-perks'].data.items.slice(0, 6).map(([n, e, g, r]) => `
+  <button class="res" data-kind="perk" style="${rv(r)}">
+    <span class="res__frame" data-kind="perk">${svg(g)}</span>
+    <span class="res__txt">
+      <span class="res__t">${n}</span>
+      <span class="res__s">杀手技能 · 通用</span>
+    </span>
+  </button>`).join('');
+
+/* 收藏页：混排两种形态，用于对比 */
+document.getElementById('gridFav').innerHTML =
+  [['厄咒：废墟','Hex: Ruin','uncommon','perk',0],
+   ['彩虹石','Iridescent Stone','ultra','addon',4],
+   ['果断一击','Decisive Strike','rare','perk',6],
+   ['血染线圈','Bloody Coil','rare','addon',0],
+   ['绞肉机','Barbecue & Chilli','uncommon','perk',7],
+   ['生锈弹簧','Rusty Springs','common','addon',1]]
+  .map(([n, e, r, k, g]) => cellHTML(n, g, r, k)).join('');
+
+/* 评审面板控制 */
+document.querySelectorAll('.seg').forEach(seg => {
+  seg.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    const g = seg.dataset.group, v = btn.dataset.v;
+    if (g === 'screen') app.dataset.screen = v;
+    else document.documentElement.dataset[g] = v;
+  });
+});
+
+render();
+</script>
+</body>
+</html>

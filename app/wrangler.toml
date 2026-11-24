@@ -1,0 +1,12 @@
+# Cloudflare Pages 项目配置
+#
+# 这个文件不是必需的（命令行 --project-name 也能指定），
+# 有它的好处：以后直接 `wrangler pages deploy` 就够了，不用每次带参数。
+#
+# 部署方式选的是「直接上传」（wrangler pages deploy），不是 Git 集成：
+#   本仓库目前不是 git 仓库，而且自用站每次改完手动传一下更简单。
+# 想改成 push 自动部署，见 README「部署到 Cloudflare Pages · B 路线」。
+
+name = "dbd-tool"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-01-01"

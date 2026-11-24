@@ -1,0 +1,20 @@
+# 依赖与构建产物（app/ 里也有自己的 .gitignore，这里是仓库级的兜底）
+node_modules/
+dist/
+.npm-cache/
+.cache/
+
+# 临时草稿，不属于项目本身
+.scratch/
+.scratch-*.html
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 本地覆盖（别把密钥、本地路径提上来）
+*.local
+.env
+.env.*

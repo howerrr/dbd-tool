@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.npm-cache/
+# 导入脚本的网络缓存（dbdwiki 的原始 JSON），不入库
+.cache/
+*.local
+.DS_Store
+.vscode/

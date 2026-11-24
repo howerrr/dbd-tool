@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>数值高亮 · 效果预览</title>
+<style>
+  :root {
+    --elev1: #101014;
+    --elev2: #16161b;
+    --line: rgba(232, 226, 214, 0.075);
+    --line2: rgba(232, 226, 214, 0.14);
+    --ink: #e8e2d6;
+    --ink-dim: #8f897d;
+    --ink-faint: #5c584f;
+    --value: #ffd48a;
+    --accent: #b32020;
+    --font-sans: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  body {
+    margin: 0; padding: 24px 20px; background: #0a0a0c;
+    font-family: var(--font-sans); color: var(--ink);
+  }
+  h2 { font-size: 13px; letter-spacing: .1em; color: var(--ink-dim); margin: 0 0 14px; }
+  .card {
+    background: var(--elev1); border-radius: 12px; padding: 18px 20px;
+    border-top: 1px solid var(--line2); margin-bottom: 18px;
+  }
+  .desc { font-size: 13.5px; line-height: 1.85; color: #cdc7ba; }
+  .desc p { margin: 0 0 11px; }
+  .desc p:last-child { margin-bottom: 0; }
+  .desc p.bullet { padding-left: 15px; position: relative; color: var(--ink-dim); font-size: 13px; }
+  .desc p.bullet::before {
+    content: ''; position: absolute; left: 3px; top: 11px;
+    width: 4px; height: 4px; border-radius: 1px; background: var(--accent); opacity: .8;
+  }
+  /* 新样式 */
+  .desc mark {
+    background: none; font-weight: 700; color: var(--value); letter-spacing: .01em;
+  }
+  /* 旧样式，用于对比 */
+  .old mark {
+    background: none; font-weight: 600; color: var(--ink);
+    border-bottom: 1px solid rgba(179, 32, 32, .45); letter-spacing: normal;
+  }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<h2>新样式 · 字重加粗 + 暖金提亮（无下划线）</h2>
+<div class="card">
+  <div class="desc">
+    <p>钩住逃生者时，所有处于<mark>24米</mark>范围内的逃生者会发出尖叫声。</p>
+    <p class="bullet">每<mark>30秒</mark>，一个已设置但未被触发的捕兽夹会随机移动。</p>
+    <p class="bullet">治疗他人速度增加<mark>50%</mark>，持续<mark>10秒</mark>。</p>
+    <p class="bullet">钩住<mark>3名</mark>不同逃生者后，点亮<mark>1处</mark>晦暗图腾；同一时间至多<mark>3台</mark>发电机处于侵入状态。</p>
+  </div>
+</div>
+
+<h2>旧样式 · 下划线（对比用）</h2>
+<div class="card old">
+  <div class="desc">
+    <p>钩住逃生者时，所有处于<mark>24米</mark>范围内的逃生者会发出尖叫声。</p>
+    <p class="bullet">每<mark>30秒</mark>，一个已设置但未被触发的捕兽夹会随机移动。</p>
+    <p class="bullet">治疗他人速度增加<mark>50%</mark>，持续<mark>10秒</mark>。</p>
+  </div>
+</div>
+</body>
+</html>

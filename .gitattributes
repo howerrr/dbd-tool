@@ -1,0 +1,13 @@
+# 统一用 LF 存进仓库：项目文件都是 LF，Windows 上开 autocrlf 会造成整库假改动
+* text=auto eol=lf
+
+# 图片一律当二进制，别做换行转换、也别在 diff 里尝试合并
+*.png binary
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# 这两个文件必须保持 LF 逐字节一致，否则不同平台安装解析出差异
+package-lock.json text eol=lf

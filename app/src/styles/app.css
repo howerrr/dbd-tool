@@ -1,0 +1,1389 @@
+/* ============================================================
+   全局重置与移动端基线
+   ============================================================ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: #060608;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ============================================================
+   App 骨架
+   ============================================================ */
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* 地址栏收起时不会被裁 */
+  overflow: hidden;
+  background: var(--bg);
+  isolation: isolate;
+}
+
+/* 光感：顶部一层极淡的骨白冷光 + 四周对称暗角。
+   目标是「有光线变化」但「不压暗任何可读区域」——
+   所以光源用「加亮顶部」实现，而不是「压暗底部」。
+   上一版是 radial-gradient(... at 50% -10%, ... rgba(0,0,0,.6))，
+   中部就 42% 黑、底部 60% 黑，手机上表现为顶光、下半屏发暗，已废弃。 */
+.app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  background:
+    /* ① 顶部冷光：只在最上面一小条，向下 70% 处衰减干净 */
+    radial-gradient(ellipse 130% 38% at 50% -6%, rgba(232, 226, 214, 0.05), transparent 70%),
+    /* ② 四周轻暗角：中心对称，正文区域不受影响 */
+    radial-gradient(ellipse 135% 80% at 50% 50%, transparent 62%, rgba(0, 0, 0, 0.26) 100%);
+}
+
+/* 颗粒：杀气质感，压到 5.5% 不破坏简约 */
+.app::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 71;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   顶栏
+   ============================================================ */
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: calc(12px + var(--safe-top)) 14px 10px;
+  background: linear-gradient(180deg, rgba(10, 10, 12, 0.96), rgba(10, 10, 12, 0.88));
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  z-index: 20;
+}
+
+.topbar__back {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: -8px;
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ink-dim);
+  transition: 0.15s;
+}
+.topbar__back:active {
+  background: var(--elev2);
+  transform: scale(0.94);
+}
+.topbar__back svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.topbar__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.topbar__title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar__sub {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   主滚动区
+   ============================================================ */
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 抽屉打开时锁住主区滚动。
+   只切 overflow 不重建元素，scrollTop 会被浏览器保留，
+   关掉抽屉后位置不会跳回顶部。 */
+.app[data-sheet='open'] .main {
+  overflow: hidden;
+}
+
+/* ---------- 角色总览：6 列竖长方形头像，无名字 ---------- */
+.chargrid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols-char), 1fr);
+  gap: 9px 6px;
+  padding: 12px 12px 16px;
+  align-content: start;
+}
+
+.char {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  transition: 0.16s;
+  /* iOS 长按图片会弹「存储图像」动作单，和卡片点击打架 —— 关掉 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.char__av {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--char-ratio);
+  overflow: hidden;
+  /* 去掉骨白描边：卡片底图自带边缘，再加 1px 白线会显脏。
+     保留 1px 透明边框占位，让卡片底图的内缩量和设计稿一致。 */
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: var(--elev1);
+  color: var(--ink-faint);
+  /* 只保留轻微的按下缩放，不再有红色描边／慢速回色 */
+  transition: transform 0.16s ease;
+}
+
+/* ---- 卡片底：wiki 名册三层底图在构建期合成并裁掉留白，运行时只有一层 ----
+   注意：阵营色（杀手红 / 求生者蓝）在构建期就烘焙进图里了，运行时零 CSS filter。
+   原因：wiki 的染色用的是 `sepia(1) saturate(30) hue-rotate(...)` 这种极端滤镜链，
+   在 iOS Safari 上渲染异常（wiki 自己的 CSS 里就写着 "doesnt work :("）。 */
+.char__frame {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+}
+.char__av[data-role='killer'] .char__frame {
+  background-image: url('/icons/card/frame-killer.webp');
+}
+.char__av[data-role='survivor'] .char__frame {
+  background-image: url('/icons/card/frame-survivor.webp');
+}
+/* 角色抠图：保留 wiki 原始的正方形画布（不裁边），按固定宽度等比缩放。
+   这样所有角色共享同一画布尺度 —— 观感与 wiki 名册一致，
+   也不会出现「宽比例角色被裁掉」或「按内容裁边导致大小不一」的问题。
+
+   宽度定在 124%：画布四周是透明留白（实测内容只占 72.5% 宽 × 88% 高），
+   所以可以让画布溢出格子、由 .char__av 的 overflow:hidden 裁掉，
+   角色内容随之放大到约占卡片的 88% 宽 / 90% 高。
+   124% 是实测的安全上限：再大到 128% 就会有 16 个角色的头部被切掉。 */
+.char__av img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 124%;
+  height: auto;
+  display: block;
+}
+/* 无头像时用名字首字占位 */
+.char__ph {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-serif);
+  font-size: clamp(15px, 4.2vw, 22px);
+  line-height: 1;
+  text-align: center;
+  opacity: 0.55;
+  user-select: none;
+}
+/* 「通用」的专属标记 */
+.char__mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42%;
+  transform: translate(-50%, -50%);
+  color: rgba(232, 226, 214, 0.62);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.char__mark svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* 按下只做轻微收缩作为触感反馈。
+   早期这里有「按下描红 + 松手 0.5s 缓慢退色」，长按时红框会一直挂着，
+   和「选中/已读」状态混在一起，已移除。 */
+.char:active .char__av {
+  transform: scale(0.95);
+}
+
+/* 未录入：整卡变暗 + 右上角空心点 */
+.char[data-empty='true'] {
+  opacity: 0.38;
+}
+.char[data-empty='true'] .char__av::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border: 1px solid var(--ink-faint);
+  border-radius: 50%;
+}
+
+/* 「通用」用虚线边框区分 */
+/* 「通用」不再用虚线边框区分 —— 靠卡片上的专属标记（钩子 / 逃生者剪影）就够了 */
+
+/* 上次查看过的角色不再用血色常驻标记（会和按下的红色混淆），
+   只保留总览滚动位置恢复这个更不打扰的做法。 */
+
+/* ============================================================
+   搜索
+   ============================================================ */
+.topbar__act {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ink-dim);
+  transition: 0.15s;
+}
+.topbar__act:active {
+  background: var(--elev2);
+  transform: scale(0.94);
+}
+.topbar__act svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 搜索态顶栏 */
+.searchbar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: calc(12px + var(--safe-top)) 0 10px;
+  background: rgba(10, 10, 12, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  z-index: 20;
+}
+.searchbar__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 14px;
+}
+
+/* 快捷筛选chips：自适应换行（不横向滚动），两侧留出与输入框相同的边距。
+   15 个词在 360px 宽度下大致排成 3 行；行距比列距略小，视觉上更像一整个词云。 */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 7px;
+  padding: 0 14px 2px;
+}
+.chip-btn {
+  flex: none;
+  padding: 5px 11px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: var(--elev2);
+  color: var(--ink-dim);
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+  transition: 0.16s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 选中态只改描边/底色/字色，**不加粗** ——
+   加粗会让 chip 自身变宽，换行布局下会把刚点的那个词挤到下一行，
+   手指位置和按钮位置对不上。 */
+.chip-btn[aria-pressed='true'] {
+  border-color: var(--accent-ring);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.chip-btn:active {
+  transform: scale(0.95);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 9px;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid var(--line2);
+  border-radius: 5px;
+  background: var(--elev2);
+}
+.field > svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  stroke: var(--ink-faint);
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px; /* 低于 16px 时 iOS 聚焦会自动放大页面 */
+}
+.field input::placeholder {
+  font-size: 14px;
+  color: var(--ink-faint);
+}
+.field input::-webkit-search-cancel-button {
+  display: none;
+}
+.field__clear {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--elev3);
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+/* 搜索结果列表 */
+.results {
+  padding: 4px 0 24px;
+}
+.res {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.res:active {
+  background: var(--elev1);
+}
+
+/* 条目结果：技能用菱形、配件用正方形，保持与图标格一致 */
+.res__shape {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  color: var(--ink-faint);
+}
+.res__shape svg {
+  position: relative;
+  z-index: 2;
+  width: 38%;
+  height: 38%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.res__shape[data-kind='perk']::before {
+  content: '';
+  position: absolute;
+  inset: 14.6%;
+  transform: rotate(45deg);
+  background: var(--elev2);
+  border: 1px solid var(--perk-edge);
+}
+/* 搜索结果里的技能图标同样裁成菱形放大 */
+.res__shape[data-kind='perk'] svg,
+.res__shape[data-kind='perk'] img {
+  width: 94%;
+  height: 94%;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+/* 角色结果的卡片缩略：复用 .char__av 的图层，只改尺寸 */
+.res__char {
+  flex: none;
+  width: 38px;
+  /* aspect-ratio 由 .char__av 的 var(--char-ratio) 提供 */
+}
+.res__char .char__frame {
+  background-size: 100% 100%;
+}
+/* 搜索里的技能/配件缩略：用真实图标，配件边框按稀有度着色 */
+.res__shape img {
+  position: relative;
+  z-index: 2;
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+.res__shape[data-kind='perk'] img {
+  width: 94%;
+  height: 94%;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.res__shape[data-kind='addon'] {
+  background: var(--elev2);
+  /* 与图标格一致：正方形 + 四边框用稀有度色 */
+  border: 1px solid var(--rarity, var(--line));
+  border-radius: 2px;
+}
+.res__shape[data-kind='addon'] img {
+  width: 84%;
+  height: 84%;
+}
+
+.res__txt {
+  min-width: 0;
+  flex: 1;
+}.res__t {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.res__s {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+
+/* 角色结果右侧：该角色的专属技能，沿用菱形形态做小缩略。
+   尺寸 34px —— 行高由左侧角色卡（38px 宽 / 0.8216 ≈ 46px 高）决定，
+   34px 的菱形不会撑高整行；再大就会挤压文字区。 */
+.res__perks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.res__mini {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  color: var(--ink-faint);
+}
+.res__mini::before {
+  content: '';
+  position: absolute;
+  inset: 13%;
+  transform: rotate(45deg);
+  background: var(--elev2);
+  border: 1px solid var(--perk-edge);
+}
+.res__mini img,
+.res__mini svg {
+  position: relative;
+  z-index: 2;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.res__mini svg {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.results__empty {
+  padding: 64px 30px;
+  text-align: center;
+}
+/* 跨角色结果被截断时的提示 */
+.results__more {
+  padding: 14px 16px 4px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  text-align: center;
+}.results__empty-t {
+  margin-bottom: 10px;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
+.results__empty-s {
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--ink-faint);
+}
+
+/* ---------- 钻取后的分区 ---------- */
+.sections {
+  padding-top: 16px;
+}
+
+.sect {
+  padding: 0 14px;
+  margin-bottom: 26px;
+}
+.sect:last-child {
+  margin-bottom: 32px;
+}
+.sect__head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.sect__t {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.sect__line {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.grid {
+  display: grid;
+  gap: 12px 8px;
+}
+/* 技能：自适应铺满，3 条时自动放大撑满整行 */
+.grid--perk {
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 15px 10px;
+}
+/* 配件：固定 5 列 */
+.grid--addon {
+  grid-template-columns: repeat(var(--cols-addon), 1fr);
+}
+
+/* ---------- 图标格通用 ---------- */
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.cell__frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--elev2);
+  transition: 0.16s;
+}
+.cell__nm {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  width: 100%;
+  font-size: 9.5px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--ink-dim);
+}
+.cell:active .cell__frame {
+  transform: scale(0.94);
+}
+.cell:active .cell__nm {
+  color: var(--ink);
+}
+
+/* ---------- 配件：正方形 + 四边框按稀有度着色 ----------
+   注意：之前用 `padding: 1px` + 背景色冒充边框，但内层 .cell__frame-in 是
+   `position: absolute; inset: 0`，绝对定位相对「内边距盒」定位，会把那一圈 padding
+   完全盖住 —— 稀有度色根本显示不出来，只在斜切角漏出杂色。
+   现在直接上真正的 border，去掉内层和底部色条（边框已经承载了稀有度信息）。 */
+.cell[data-kind='addon'] .cell__frame {
+  background: var(--elev2);
+  border: 1px solid var(--rarity, var(--line2));
+  border-radius: 2px;
+}
+
+/* ---------- 技能：菱形，1px 边框（粗细与配件一致），无稀有度色条 ---------- */
+.cell[data-kind='perk'] .cell__frame {
+  background: none;
+}
+.cell[data-kind='perk'] .cell__frame::before {
+  content: '';
+  position: absolute;
+  inset: 14.6%;
+  transform: rotate(45deg);
+  background: var(--elev2);
+  border: 1px solid var(--perk-edge);
+  /* 只保留外投影做层次；去掉原来那圈 inset 黑边，否则 1px 描边会被吃掉一截 */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  transition: 0.16s;
+}
+/* 按下时不再整圈点亮血色（长按会残留高亮），只保留 scale 反馈 */
+/* 技能图标：裁成菱形并尽量顶满整框（inset 1.5% 保留一圈描边可见）。
+   原来 inset 28% 只能显示 44% 的画面，太小；
+   裁成菱形后能用到整块面积，也更像游戏里的技能形态。 */
+.cell[data-kind='perk'] .cell__ic {
+  inset: 1.5%;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+/* 配件图标：与详情抽屉头部的配件图标保持一致（84%） */
+.cell[data-kind='addon'] .cell__ic {
+  inset: 8%;
+}
+
+/* ---------- 图标内容 ---------- */
+.cell__ic {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+}
+.cell__ic svg,
+.cell__ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cell__ic svg {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- 空态 ---------- */
+.blank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 90px 34px;
+  text-align: center;
+}
+.blank__ic {
+  width: 50px;
+  height: 50px;
+  color: var(--ink-faint);
+  opacity: 0.45;
+}
+.blank__ic svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.2;
+}
+.blank__t {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
+.blank__s {
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   底部 Tab
+   ============================================================ */
+.tabbar {
+  flex: none;
+  display: flex;
+  height: calc(var(--tab-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(12, 12, 15, 0.94);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+  z-index: 25;
+}
+.tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--ink-faint);
+  transition: 0.16s;
+}
+.tab svg {
+  width: 21px;
+  height: 21px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tab span {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+.tab[aria-selected='true'] {
+  color: var(--ink);
+}
+.tab[aria-selected='true']::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-ring);
+}
+.tab:active {
+  color: var(--ink-dim);
+}
+
+/* ============================================================
+   底部抽屉
+   ============================================================ */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+.backdrop[data-open='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  max-height: 86%;
+  padding-bottom: var(--safe-bottom);
+  border-top: 1px solid var(--line2);
+  border-radius: 16px 16px 0 0;
+  background: var(--elev1);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.7);
+  transform: translateY(101%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet[data-open='true'] {
+  transform: translateY(0);
+}
+/* 顶部一道血色微光，全界面唯一的发光元素 */
+.sheet::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.7;
+}
+
+.sheet__handle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 22px;
+  cursor: grab;
+  touch-action: none; /* 手势只挂把手，内容区保持原生滚动 */
+}
+.sheet__handle i {
+  width: 34px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line3);
+}
+
+.sheet__body {
+  overflow-y: auto;
+  overscroll-behavior: contain; /* 防止滚动穿透 */
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 20px 28px;
+}
+
+/* ---------- 详情头 ---------- */
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.detail-head__frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 58px;
+  height: 58px;
+  color: var(--ink-dim);
+}
+.detail-head__frame[data-kind='perk']::before {
+  content: '';
+  position: absolute;
+  inset: 14.6%;
+  transform: rotate(45deg);
+  background: var(--elev2);
+  border: 1px solid var(--perk-edge);
+}
+.detail-head__frame[data-kind='addon'] {
+  background: var(--elev2);
+  /* 与图标格一致：正方形 + 四边框都用稀有度色 */
+  border: 1px solid var(--rarity, var(--line2));
+  border-radius: 2px;
+}
+.detail-head__frame svg,
+.detail-head__frame img {
+  position: relative;
+  z-index: 2;
+}
+.detail-head__frame svg {
+  width: 38%;
+  height: 38%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.detail-head__frame img {
+  width: 58%;
+  height: 58%;
+  object-fit: contain;
+}
+/* 技能详情头：图标同样裁成菱形并放大 */
+.detail-head__frame[data-kind='perk'] img {
+  width: 96%;
+  height: 96%;
+  object-fit: cover;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+/* 配件详情头：同步放大 */
+.detail-head__frame[data-kind='addon'] img {
+  width: 84%;
+  height: 84%;
+}
+
+.detail-head__txt {
+  min-width: 0;
+  padding-top: 2px;
+}
+.detail-head h2 {
+  margin-bottom: 4px;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.25;
+}
+.detail-head__en {
+  margin-bottom: 9px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 3px 8px;
+  border: 1px solid var(--line2);
+  border-radius: 3px;
+  background: var(--elev2);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink-dim);
+}
+.chip--rarity {
+  border-color: currentColor;
+  background: transparent;
+  font-weight: 600;
+  color: var(--rarity);
+}
+
+/* ---------- 详情正文 ---------- */
+.desc {
+  padding-top: 18px;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: #cdc7ba;
+}
+.desc p {
+  margin-bottom: 11px;
+}
+.desc p.bullet {
+  position: relative;
+  padding-left: 15px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+.desc p.bullet::before {
+  content: '';
+  position: absolute;
+  top: 11px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0.8;
+}
+/* 描述里的数值高亮：加粗 + 提亮 + 暖金色，不用下划线。
+   下划线在密集文案里太抢眼，改成「字重 + 颜色」区分更克制；
+   暖金也贴合游戏内对关键数值的标注方式。 */
+.desc mark {
+  background: none;
+  font-weight: 700;
+  color: var(--value);
+  letter-spacing: 0.01em;
+}
+.desc__empty {
+  padding: 6px 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.flavor {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.9;
+  color: var(--ink-faint);
+}
+
+/* ---------- 页面底部：一段说明 + 一行落款 ----------
+   目标是「用最少的行数把合规说清楚」：
+     说明段：非官方声明 + 两处来源署名（CC BY-NC-SA 的 BY 要求，不能删）
+     落款行：左边数据日期，右边「联系作者」
+   颜色用 --ink-dim（在 #0a0a0c 上约 5.6:1）而不是 --ink-faint（约 2.8:1）——
+   小字 + 低对比是之前最影响可读性的地方。 */
+.foot {
+  padding: 18px 16px calc(24px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+}
+.foot__v {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--ink-dim);
+  text-wrap: pretty;
+}
+.foot__v a {
+  color: var(--ink-dim);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2.5px;
+  -webkit-tap-highlight-color: transparent;
+}
+.foot__v a:active {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+/* 落款行：日期与作者连成一句，和上面的说明段一样**靠左**对齐，中间用一个「·」隔开。
+   「·」挂在日期 span 的 ::after 上而不是链接里 ——
+   放进链接会变成带下划线的可点区域，看上去像链接的一部分。 */
+.foot__bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+}
+.foot__date::after {
+  content: '·';
+  margin: 0 7px;
+  opacity: 0.6;
+}
+.foot__author {
+  /* 负 margin 抵消内边距：视觉上还是一条 10px 小字，点击区却撑到约 24px 高 */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  margin: -6px -4px;
+  color: var(--ink-dim);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2.5px;
+  -webkit-tap-highlight-color: transparent;
+}
+.foot__author svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.foot__author:active {
+  color: var(--accent);
+}
+
+/* ============================================================
+   加载 / 错误
+   ============================================================ */
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 30px;
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.state strong {
+  color: var(--ink-dim);
+  font-weight: 600;
+}
+
+/* ============================================================
+   网页端适配（视口 ≥ 900px）
+   —— 这里的每一条都在媒体查询里面，移动端的表现一个像素都不变。
+   移动端的 6 列 / 5 列是按手指的触控面积算的；
+   桌面有精确指针和更大画布，所以换成 auto-fill 自适应铺满 + 放大字号。
+   ============================================================ */
+@media (min-width: 900px) {
+  /* 0. 两侧留白（gutter）里的光。
+        body 底色是 #060608，比 .app 的 #0a0a0c 更深；
+        这里叠两层极淡的光，让中间的栏看起来像「被从内部照亮的面板」，
+        而不是一块压在纯黑上的矩形。 */
+  body {
+    background:
+      /* ① 顶部中央的冷色天光：只在最上面一段，两侧 gutter 的顶部会亮一点 */
+      radial-gradient(ellipse 80% 46% at 50% -10%, rgba(232, 226, 214, 0.055), transparent 72%),
+      /* ② 中栏的血色反光，从中栏往外衰减到黑 */
+      radial-gradient(ellipse 62% 66% at 50% 46%, rgba(179, 32, 32, 0.105), transparent 74%),
+      #060608;
+    background-attachment: fixed;
+  }
+
+  /* 1. 整站收成一栏居中。宽度上限 1360，同时保证两侧永远至少留 32px 的 gutter
+        （min() 里那个 100% - 64px），否则大屏上栏会顶到屏幕边、看不出是「面板」。
+        两侧的观感由两层叠加出来：
+          · 最外面两圈血色光晕 —— 贴着栏边往外散，宽度与视口无关，永远贴合
+          · 两侧各 1px 的骨白偏移阴影 —— 形成一条「被打亮的接缝」 */
+  .app {
+    max-width: min(1360px, 100% - 64px);
+    margin-inline: auto;
+    box-shadow:
+      0 0 120px rgba(179, 32, 32, 0.14),
+      0 0 36px rgba(179, 32, 32, 0.09),
+      1px 0 0 rgba(232, 226, 214, 0.09),
+      -1px 0 0 rgba(232, 226, 214, 0.09);
+  }
+
+  /* 2. 网格改自适应。角色卡最小 104px —— 这个值是被**图源**卡住的：
+        人像源图是 200×200，卡片头像按 124% 显示，所以 104px 的卡片
+        ≈ 129 CSS px 的头像；DPR1 桌面上是缩小（很清晰），
+        DPR2 的 Retina 上会被放大 1.3 倍（略软）。再放大卡片只会更糊。
+        真要在 Retina 上更锐，得把 portraits 的源图从 200px 提到 300px（见 README）。 */
+  .chargrid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 14px 10px;
+    padding: 18px 18px 22px;
+  }
+  /* 技能永远只有 3 条。auto-fit + 1fr 会让它们各自撑到 1/3 屏宽
+        （菱形变成巨幅），所以这里改成固定列宽 + 左对齐。 */
+  .grid--perk {
+    grid-template-columns: repeat(auto-fill, 104px);
+    justify-content: start;
+    gap: 16px 12px;
+  }
+  .grid--addon {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 14px 10px;
+  }
+  .sect {
+    padding: 0 18px;
+  }
+  .cell__nm {
+    font-size: 10.5px;
+  }
+
+  /* 3. 结果列表：横跨 1180px 会难以扫读，收成居中的一栏 */
+  .results {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+  .res {
+    padding: 11px 18px;
+  }
+  .res__t {
+    font-size: 14.5px;
+  }
+
+  /* 4. 顶栏与搜索栏：桌面没有手势，可以给更从容的留白 */
+  .topbar {
+    padding: calc(16px + var(--safe-top)) 20px 14px;
+  }
+  .topbar__title {
+    font-size: 19px;
+  }
+  .searchbar__row {
+    padding: 0 20px;
+  }
+  .chips {
+    padding: 0 20px 2px;
+  }
+  .sect__t {
+    font-size: 14px;
+  }
+
+  /* 5. 底部 Tab：两个 Tab 各撑 590px 太难看，收成居中一组 */
+  .tabbar {
+    justify-content: center;
+    gap: 6px;
+  }
+  .tab {
+    flex: 0 0 auto;
+    min-width: 128px;
+  }
+
+  /* 6. 抽屉：变成居中的卡片，仍然从底部滑入。
+        ⚠️ 只能改 max-width / margin —— 拖拽时 JS 会直接写 style.transform，
+           在这里加 transform 会在拖动瞬间被覆盖掉。 */
+  .sheet {
+    max-width: 640px;
+    margin-inline: auto;
+    max-height: 78%;
+    border-inline: 1px solid var(--line2);
+  }
+  .desc {
+    font-size: 14.5px;
+    line-height: 1.9;
+  }
+  .desc p.bullet {
+    font-size: 14px;
+  }
+  .foot__v {
+    font-size: 11.5px;
+  }
+
+  /* 7. 滚动条：手机上默认不可见，桌面会实实在在占掉一截宽度 */
+  .main {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line2) transparent;
+  }
+  .main::-webkit-scrollbar {
+    width: 10px;
+  }
+  .main::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .main::-webkit-scrollbar-thumb {
+    /* 透明边框 + background-clip 做「细滚动条」：不占布局也不会贴边 */
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+    background-color: var(--line3);
+  }
+  .sheet__body::-webkit-scrollbar {
+    width: 8px;
+  }
+  .sheet__body::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+    background-color: var(--line3);
+  }
+
+  /* 8. 键盘可见焦点。触摸不会触发 :focus-visible，所以这条对手机无影响；
+        但桌面用 Tab 键时必须看得见焦点落在哪。 */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  /* 搜索框本身不描边，改成让整个输入容器亮起来（圆角一致，更好看） */
+  .field input:focus-visible {
+    outline: none;
+  }
+  .field:focus-within {
+    border-color: var(--line3);
+  }
+
+  /* 9. 底部信息贴底。桌面 12 列之后，45 个角色只排 4 行，内容常常填不满一屏，
+        这时底部的来源说明会悬在半空。把 .main 变成纵向 flex，
+        再给 .foot 一个 margin-top: auto —— 有富余空间时它被推到底，
+        内容超过一屏时 auto 归零，行为和普通文档流一致。
+        其余子项必须 flex: none，否则它们会被 flex 压缩。 */
+  .main {
+    display: flex;
+    flex-direction: column;
+  }
+  .main > * {
+    flex: none;
+  }
+  .foot {
+    margin-top: auto;
+  }
+}
+
+/* ============================================================
+   大屏（视口 ≥ 1280px）：角色网格锁定 12 列
+   —— 上面的 auto-fill 只能保证「至少 7~11 列」，具体几列随宽度浮动；
+      这里直接把列数钉成 12，宽度只影响每格大小，行数永远一致。
+   ============================================================ */
+@media (min-width: 1280px) {
+  .chargrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+/* ============================================================
+   悬停反馈：只在「有精确指针」的设备上生效
+   —— 触摸屏（hover: none）不会匹配，所以移动端不会出现「点一下残留 hover」的问题。
+   ============================================================ */
+@media (hover: hover) and (pointer: fine) {
+  .char:hover .char__av {
+    border-color: var(--line3);
+  }
+  /* :not(:active) —— 否则鼠标按下时 hover 会覆盖 .cell:active 的缩放反馈 */
+  .cell:not(:active):hover .cell__frame {
+    transform: translateY(-2px);
+  }
+  .cell:hover .cell__nm {
+    color: var(--ink);
+  }
+  .res:hover {
+    background: var(--elev1);
+  }
+  .chip-btn:hover:not([aria-pressed='true']) {
+    border-color: var(--line3);
+    color: var(--ink-dim);
+  }
+  .tab:hover {
+    color: var(--ink-dim);
+  }
+  .topbar__act:hover,
+  .topbar__back:hover,
+  .field__clear:hover {
+    color: var(--ink);
+  }
+  .foot__v a:hover {
+    color: var(--ink);
+  }
+  .foot__author:hover {
+    color: var(--accent);
+  }
+  .sheet__handle:hover i {
+    background: var(--line3);
+  }
+}
+
+/* 尊重系统的减少动效设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

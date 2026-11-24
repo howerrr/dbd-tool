@@ -1,0 +1,61 @@
+# Cloudflare Pages 缓存与安全响应头
+#
+# 三档缓存，按「内容变不变」区分：
+#
+#   /assets/*   Vite 产物，文件名带内容 hash —— 可以无限期缓存。
+#               换版本时文件名会变，所以 immutable 是安全的。
+#
+#   /icons/*    条目图标与角色抠图，文件名来自 wiki 的原始文件名（无 hash）。
+#               数据只在重新导入时才会变，给 7 天 + 允许用过期副本先顶上。
+#
+#   /data/*     文本数据（owners / perks / addons / addons-index）。
+#               重新导入后会变，所以只给 10 分钟，其余时间允许后台异步更新。
+#               太短会让每次打开都重新下载，太长会看不到新补的条目。
+#
+# 注意：Cloudflare Pages 的 _headers 不支持变量，路径用 /* 通配。
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/data/*
+  Cache-Control: public, max-age=600, stale-while-revalidate=86400
+
+# 站点图标（favicon / apple-touch-icon / manifest 图标）：
+# 文件名固定、几乎不变，给 30 天。它们不在 /icons/ 下，所以要单独一条。
+/favicon.svg
+  Cache-Control: public, max-age=2592000
+
+/favicon-32.png
+  Cache-Control: public, max-age=2592000
+
+/favicon-192.png
+  Cache-Control: public, max-age=2592000
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=2592000
+
+/icon-192.png
+  Cache-Control: public, max-age=2592000
+
+/icon-512.png
+  Cache-Control: public, max-age=2592000
+
+/icon-maskable-512.png
+  Cache-Control: public, max-age=2592000
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=86400
+  Content-Type: application/manifest+json
+
+# 次级资源与主文档一起校验，避免部署后拿到旧的 index.html 配新的 assets
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 个人自用站，不欢迎被索引
+/*
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: no-referrer

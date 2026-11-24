@@ -1,0 +1,66 @@
+/* ============================================================
+   设计令牌
+   —— 所有颜色/尺寸的唯一来源，改这里就能改全站
+   ============================================================ */
+:root {
+  /* 底色与浮层 */
+  --bg: #0a0a0c;
+  --elev1: #101014;
+  --elev2: #16161b;
+  --elev3: #1e1e25;
+
+  /* 描边 */
+  --line: rgba(232, 226, 214, 0.075);
+  --line2: rgba(232, 226, 214, 0.14);
+  --line3: rgba(232, 226, 214, 0.24);
+
+  /* 文字：骨白，不用纯白（纯白在暗底上刺眼） */
+  --ink: #e8e2d6;
+  --ink-dim: #8f897d;
+  --ink-faint: #5c584f;
+
+  /* 强调：血，全局唯一 */
+  --accent: #b32020;
+  --accent-soft: rgba(179, 32, 32, 0.14);
+  --accent-ring: rgba(179, 32, 32, 0.45);
+
+  /* 描述里的数值高亮：游戏内文案的关键数值就是暖金色，
+     这里取更亮一档，保证在 #101014 的抽屉底上对比度足够 */
+  --value: #ffd48a;
+
+  /* 技能菱形边框的颜色与粗细（1px，与配件边框一致） */
+  --perk-edge: #612770;
+
+  /* 稀有度（仅配件/物品使用）
+     色值取自迷雾笔记的 --detail-rarity-rgb / --detail-rarity-glow-rgb：
+       base 用于文字与描边，glow 用于细色条（深底上 2px 更需可读性）
+     「非凡」对应 dbdwiki 的 visceral；另有 event 用于活动类配件 */
+  --r-common: #69452c;
+  --r-common-glow: #ae7c50;
+  --r-uncommon: #3eb127;
+  --r-uncommon-glow: #88e65c;
+  --r-rare: #2e66b8;
+  --r-rare-glow: #699eee;
+  --r-vrare: #71228b;
+  --r-vrare-glow: #c65de0;
+  --r-ultra: #d11143;
+  --r-ultra-glow: #ff4e75;
+  --r-event: #d57c1f;
+  --r-event-glow: #ffb843;
+
+  /* 字体：中文绝不 web 加载字体（3-5MB） */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC',
+    'Microsoft YaHei', sans-serif;
+  --font-serif: 'Noto Serif SC', 'Songti SC', 'Source Han Serif SC', Georgia, serif;
+
+  /* 布局 */
+  --tab-h: 56px;
+  --cols-char: 6;
+  --cols-addon: 5;
+  /* 角色卡比例 = 烘焙后裁掉留白的卡片实体尺寸 198×241 */
+  --char-ratio: 198 / 241;
+
+  /* 安全区（iPhone 刘海 / 底部横条） */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
