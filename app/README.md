@@ -457,59 +457,77 @@ wiki 的染色参数是 `sepia(1) saturate(30) hue-rotate(289.1deg) saturate(7) 
 
 站点走 **Actions 构建 + 官方 Pages 部署**，不用「分支部署」——因为仓库根是工作区、
 站点在 `app/` 子目录，而分支部署只支持 `/` 或 `/docs`；而且 Vite 产物不该提交进仓库。
+（`gh-pages` 那条路已弃用：两套机制只能有一套管着 Pages，留着只会互相打架。）
 
-### 关键：项目站在子路径下
+### 域名：dbd.howerlin.top
 
-个人站 `https://<user>.github.io/` 每个账号只能有一个（已被你的个人站占用），
-所以本项目只能是**项目站**：
+- `howerlin.top` 是**用户站**（`howerrr.github.io` 仓库）的自定义域名，绑在你博客上，
+  不能同时给这个站用 —— GitHub 的自定义域名只能绑**域名根**，也加不了路径。
+- 所以本站用子域名 **`dbd.howerlin.top`**。
+- 自定义域名是根路径 → **base 用默认的 `/`**，`VITE_BASE` 不需要设。
 
+### 三件手动的事（各一次）
+
+**1. DNS 加一条 CNAME**
+
+| 类型 | 主机记录 | 值 |
+|---|---|---|
+| CNAME | `dbd` | `howerrr.github.io` |
+
+**2. 仓库 Settings → Pages**
+
+- **Source** 选 **GitHub Actions**（不是 Deploy from a branch）
+- **Custom domain** 填 `dbd.howerlin.top` → Save（GitHub 会去校验 DNS）
+- 等一会儿出现 **Enforce HTTPS** 勾上（证书签发可能要几分钟到几小时）
+
+**3. 推代码**
+
+```bash
+git push
 ```
-https://<user>.github.io/<仓库名>/
-```
 
-于是所有资源都在 `/仓库名/` 这个子路径下。代码里做了两件事：
+之后每次 push 到 `main` 都会自动：`npm ci` → 类型检查 → 单测 → 构建 → 产物自检 → 部署。
 
-1. `vite.config.ts` 的 `base` 由环境变量 `VITE_BASE` 决定（默认 `'/'`），
-   workflow 里从 `GITHUB_REPOSITORY` 反推仓库名注入 —— **换仓库名不用改代码**。
-2. 数据 JSON 里存的是绝对路径（`/icons/chars/k-01.webp`），不会自动带前缀，
-   统一由 `src/lib/base.ts` 的 **`asset()`** 在**数据加载层**补一次
-   （`api.ts` 的四个 `load*` 函数出口处）。组件层完全不用关心部署路径。
+### ⚠️ `app/public/CNAME` 不能删
 
-> 卡片框（`frame-killer/survivor.webp`）特别从 `public/` 挪进了 `src/assets/`：
-> 只有走 Vite 资源管线，CSS 里的 `url()` 才会被重写成带 base 且带内容 hash 的路径。
+内容是 `dbd.howerlin.top`，构建后成为 `dist/CNAME` 一起上传。
 
-### 三个手动步骤
-
-1. **Settings → Pages → Source** 选 **GitHub Actions**（不是 Deploy from a branch）
-2. 推代码：`.github/workflows/pages.yml` 会自动跑 `npm ci` → 类型检查 → 单测 → 构建 → 产物自检 → 部署
-3. 等 Actions 绿了，访问 `https://<user>.github.io/<仓库名>/`
-
-之后每次 `git push` 到 `main` 都会自动重新部署。
-
-> ⚠️ **私有仓库 + GitHub Pages 需要 GitHub Pro**。免费账号只能用公开仓库发布 Pages，
-> 而公开仓库等于把 wiki 素材再分发一遍（`public/` 里 1298 张图）。
-> 自己权衡：Pro / 公开仓库 / 换回 Cloudflare。
+**Actions 部署必须这么做**：否则每次部署都会把 Settings 里的 Custom domain 清空，
+域名反复掉（这是 Actions + 自定义域名最常见的坑）。
 
 ### 上线后核查
 
 ```bash
-npm run verify:deploy https://<user>.github.io/<仓库名>/
+npm run verify:deploy https://dbd.howerlin.top/
 ```
 
-检查的是**线上行为**：入口 JS/CSS 是否存在（能第一时间抓到「部署了源码而不是产物」）、
+检查**线上行为**：入口 JS/CSS 是否存在（能第一时间抓到「部署了源码而不是产物」）、
 manifest 能否解析、不存在的 JSON 返回什么、抽样图片能否取到。
 GitHub Pages 没有 `_headers`，所以缓存那几项会显示「缺少响应头」——那是预期内的。
 
 ### 上线前自检
 
 ```bash
-npm run build && npm run verify
+npm run check   # typecheck + 单测 + 构建 + 产物自检
 ```
 
 `verify-assets.mjs` 检查：每个 `/icons/` 引用都能在 dist 里找到真实文件、
 CSS 里的 `url()` 都存在、没有 PNG 残留、配件索引条数与分包一致、
 每个角色正好 3 个技能、入口资源与 manifest 都在产物里，并打印各页面的首次加载体积。
 带 base 构建时也能跑（脚本会自动剥掉 `VITE_BASE` 前缀再比对文件）。
+
+### 两个脚本别混用
+
+| 脚本 | 用在哪 |
+|---|---|
+| `npm test` | CI。不带隔离 flag —— `--test-isolation` 在 Node 22 上叫 `--experimental-test-isolation`，写旧名会直接 `bad option` |
+| `npm run test:one-process` | 受限环境（禁止 spawn 子进程）里用；默认隔离要 fork 子进程，那里会 `EPERM` |
+
+### 顺带记一笔：`vite.config.ts` 需要 `@types/node`
+
+`base` 从 `process.env.VITE_BASE` 读，没装 `@types/node` 就会
+`TS2591: Cannot find name 'process'`，CI 的 typecheck 直接挂。
+`tsconfig.json` 的 `types` 也要包含 `"node"`（那里只列了 `vite/client` 时会挡掉自动引入）。
 
 ---
 

@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "homepage": "https://howerlin.top/dbd-tool",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -18,9 +17,6 @@
     "to:webp": "node scripts/to-webp.mjs",
     "gen:icons": "node scripts/gen-icons.mjs",
     "check": "npm run typecheck && npm run test:one-process && npm run build && npm run verify",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist -r https://github.com/howerrr/dbd-tool.git -b gh-pages",
-    "deploy:pages": "npm run build && npm run verify && npx --yes wrangler@4 pages deploy dist --project-name=dbd-tool",
     "verify:deploy": "node scripts/verify-deploy.mjs"
   },
   "dependencies": {
@@ -33,7 +29,6 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
-    "gh-pages": "^6.3.0",
     "pinyin-pro": "^3.29.5",
     "sharp": "^0.35.5",
     "typescript": "^5.7.0",

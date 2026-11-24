@@ -4,9 +4,15 @@ name: Deploy to GitHub Pages
 #   1. 仓库根是工作区，站点在 app/ 子目录，而分支部署只支持 / 或 /docs
 #   2. 站点要经过 Vite 构建，产物不该提交进仓库
 #
-# base 路径：GitHub Pages 项目站地址是 https://<user>.github.io/<repo>/，
-#   站点在子路径下，所以这里从 GITHUB_REPOSITORY 反推 repo 名注入 VITE_BASE。
-#   这样换仓库名也不用改代码。
+# base 路径：本站在自定义域名 dbd.howerlin.top 的**根路径**下，
+#   所以 base 用默认的 '/'，这里不需要注入任何变量。
+#   （如果哪天不用自定义域名、要挂到 https://<user>.github.io/<repo>/ 子路径下，
+#     再加回一步 `echo "VITE_BASE=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"`）
+#
+# 自定义域名：仓库根有 app/public/CNAME（内容是 dbd.howerlin.top），
+#   构建后会被复制到 dist/CNAME 一起上传。
+#   Actions 部署必须这么做 —— 否则每次部署都会把 Settings 里的
+#   Custom domain 清空，域名反复掉。
 
 on:
   push:
@@ -34,9 +40,6 @@ jobs:
           node-version-file: app/.nvmrc
           cache: npm
           cache-dependency-path: app/package-lock.json
-
-      - name: 计算 VITE_BASE
-        run: echo "VITE_BASE=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
 
       - name: 安装依赖
         working-directory: app
