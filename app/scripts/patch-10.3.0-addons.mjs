@@ -37,137 +37,187 @@ const RARITY = {
   visceral: 'ultra',
 };
 
-/* ---------- 中文翻译（键 = wiki 上的英文名） ---------- */
+/* ---------- 中文文本 ----------
+   来源：用户从**游戏内**截取的中文原文（权威）。之前按 wiki 英文翻译的版本已作废 ——
+   游戏内文本和 wiki 英文有几处实质差异，例如：
+     · 爆炸礼物：wiki 说 20%，游戏内是 12%
+     · 布鲁克的脓包：wiki 说加快破坏板/墙 25%，游戏内是按酸液洒落距离放大酸液池范围（最多 +100%）
+     · 乔纳森的头骨：wiki 说 8 米 + 每层 2 米，游戏内是 10 米 + 每层 5 米；印记上限 wiki 10、游戏内 5
+     · 死负鼠：游戏内限定「健康逃生者」
+     · 闪亮三轮：游戏内是「显示气场 5 秒」，wiki 是「揭露位置 8 秒」
+   标点统一成中文全角，其余措辞照抄游戏内文本。 */
 const ZH = {
-  "Allie's Scalp": {
-    title: '艾莉的头皮',
-    flavor: '最恐怖的时刻，往往始于一个简单的伤口。',
-    description: ['每场对局一次，用普通攻击击倒处于折磨效果的逃生者时，对其施加恐惧状态。'],
-  },
-  'Blackened Heart': {
-    title: '发黑的心脏',
-    flavor: '一颗仍在跳动的心脏，乌黑，爬满了蛆虫。',
-    description: ['嘲讽逃生者后，用玩具击倒逃生者时，该玩具额外获得1点致命性。'],
-  },
-  'Bottle of Bleach': {
-    title: '漂白剂瓶',
-    flavor: '涂在伤口上会带来剧烈的疼痛。还能杀灭99.9%的家用细菌！',
-    description: ['折磨效果的衰减速度降低15%。'],
-  },
-  "Mike's Phone": {
-    title: '迈克的手机',
-    flavor: '它坏了，就像迈克的脑袋一样。',
-    description: ['用玩具命中未处于回退状态的发电机时，该发电机损失5%进度并开始回退。'],
-  },
-  'Bloodstained Bullet': {
-    title: '染血弹头',
-    flavor: '一颗卡在塔拉尸体里的带血子弹。',
+  'The Ninth Circle': {
+    title: '第九圈',
+    rarity: 'ultra',
+    flavor: '虐待倾向，惊悚血腥，令人震惊。究竟什么样的人会对这种东西感兴趣？',
     description: [
-      '射击16米以外的逃生者时，获得10%急速状态，持续10秒。',
-      '当你施加折磨效果时，下一次开启百宝袋必定出现手枪。',
+      '每当你首次嘲讽一名处于恐惧状态的逃生者时，获得1层印记，至多4层。',
+      '当大门通电时，如果拥有4层印记，百宝袋的冷却时间将缩短至1秒。',
     ],
   },
-  "Brooke's Pustule": {
-    title: '布鲁克的脓疱',
-    flavor: '一个不断渗液的水泡，酸液腐蚀布鲁克脸部时还在冒泡。',
+  'Duct Tape': {
+    title: '布胶带',
+    rarity: 'ultra',
+    flavor: '用来限制受害者的行为，或许也能用来固定物品。',
+    description: ['在打开百宝袋0.5秒内装配玩具，其冷却时间会缩短4秒。'],
+  },
+  "Jonathan's Skull": {
+    title: '乔纳森的头骨',
+    rarity: 'very-rare',
+    flavor: '西耶娜弟弟的头骨，还戴着眼镜，太搞笑了！',
     description: [
-      '站在酸液池中期间，以及离开酸液池后的5秒内，破坏木板和可破坏墙壁的速度提高25%。',
-      '当你施加折磨效果时，下一次开启百宝袋必定出现酸液瓶。',
+      '使用玩具伤害或折磨一名逃生者，获得1层印记，至多5层。',
+      '嘲讽会消耗所有印记，随后，如果至少消耗了1层印记，显示10米范围内所有逃生者气场6秒，在此基础上，每层印记使显示范围扩大5米。',
+    ],
+  },
+  'Art Crispies': {
+    title: '亚特脆饼',
+    rarity: 'very-rare',
+    flavor: '每个盒子里都藏着惊喜。',
+    description: ['每当你折磨逃生者时，双方随机获得急速状态，其数值在5%至15%之间，持续5秒。'],
+  },
+  'Explosive Gift': {
+    title: '爆炸礼物',
+    rarity: 'very-rare',
+    flavor: '让人放下戒心的礼物，绝对能“炸”场。',
+    description: ['每有一个玩具达到最高致命性，你的恐惧范围就缩小12%。'],
+  },
+  'Wacky Jacks': {
+    title: '疯狂杰克',
+    rarity: 'very-rare',
+    flavor: '摄入糖分达到每日推荐摄入量的110%。',
+    description: ['玩具达到最高致命性所需点数不会超过5。'],
+  },
+  'Thornton Salt': {
+    title: '桑顿盐',
+    rarity: 'rare',
+    flavor: '一小撮可不够。',
+    description: ['遭受折磨的受伤逃生者会受到出血与重伤状态影响。此效果在移除折磨后仍会持续40秒。'],
+  },
+  'Dead Opossum': {
+    title: '死负鼠',
+    rarity: 'rare',
+    flavor: '已无生命迹象，但仍有娱乐价值的尸体。',
+    description: [
+      '使用手枪或链枷命中健康逃生者会使24米范围内的所有其他逃生者发出尖叫声，并显示其位置，持续3秒。',
+    ],
+  },
+  'Candy Head Bowl': {
+    title: '糖果头碗',
+    rarity: 'rare',
+    flavor: '深入母亲的头颅，抓取糖果。',
+    description: ['如果使用自行车喇叭探测到逃生者，重置百宝袋的冷却时间。'],
+  },
+  "Victoria's Eye": {
+    title: '维多利亚的眼睛',
+    rarity: 'rare',
+    flavor: '虽然残破，但依旧能用。',
+    description: ['直接使用火焰或酸液命中逃生者会显示其气场，持续5秒。'],
+  },
+  Emily: {
+    title: '艾米丽',
+    rarity: 'rare',
+    flavor: '一个精致的小瓷娃娃，想必正在纳闷妈妈去哪儿了。',
+    description: ['在百宝袋中可获取的玩具按固定顺序出现：自行车喇叭、手枪、喷火器、链枷、酸液瓶。'],
+  },
+  "Brooke's Pustule": {
+    title: '布鲁克的脓包',
+    rarity: 'uncommon',
+    flavor: '酸液正在腐蚀布鲁克的脸，水泡不断冒出。',
+    description: [
+      '根据酸液洒落的距离，酸液池的范围最多可扩大100%，洒落6米后达到最大范围。',
+      '如果对逃生者施加折磨，下一次搜寻百宝袋时一定能找到酸液瓶。',
     ],
   },
   'Burnt Wings': {
-    title: '烧焦的翅膀',
-    flavor: '西耶娜珍视的一切都在烈火中化为灰烬。',
+    title: '燃尽翅膀',
+    rarity: 'uncommon',
+    flavor: '西耶娜珍视的一切都化为了灰烬。',
     description: [
       '火焰的持续时间延长5秒。',
-      '当你施加折磨效果时，下一次开启百宝袋必定出现喷火器。',
+      '如果对逃生者施加折磨，下一次搜寻百宝袋时一定能找到喷火器。',
     ],
   },
-  'Shiny Tricycle': {
-    title: '闪亮的三轮车',
-    flavor: '三个轮子意味着，即使在血流成河的地面上你也能保持平衡。',
+  'Bloodstained Bullet': {
+    title: '血迹斑斑的子弹',
+    rarity: 'uncommon',
+    flavor: '一颗沾血的子弹，曾嵌入塔拉的尸体中。',
     description: [
-      '当自行车喇叭侦测到超过1名逃生者时，揭露其他未被侦测到的逃生者的位置，持续8秒。',
-      '当你施加折磨效果时，下一次开启百宝袋必定出现自行车喇叭。',
+      '使用手枪，从16米以外射击逃生者，可获得10%急速状态，持续10秒。',
+      '如果对逃生者施加折磨，下一次搜寻百宝袋时一定能找到手枪。',
     ],
   },
   "Sienna's Flesh": {
     title: '西耶娜的血肉',
-    flavor: '一块在残酷殴打中从西耶娜身上撕下的皮肉。',
+    rarity: 'uncommon',
+    flavor: '在一次残忍的殴打中从西耶娜身上撕下的皮肤。',
     description: [
-      '链枷的攻击范围扩大20%。',
-      '当你施加折磨效果时，下一次开启百宝袋必定出现链枷。',
+      '链枷最大攻击距离增加20%。',
+      '如果对逃生者施加折磨，下一次搜寻百宝袋时一定能找到链枷。',
     ],
   },
-  'Candy Head Bowl': {
-    title: '糖果头骨碗',
-    flavor: '把手伸进妈妈的头骨里，抓点糖吃。',
-    description: ['用自行车喇叭侦测到逃生者时，重置百宝袋的冷却时间。'],
-  },
-  'Dead Opossum': {
-    title: '死负鼠',
-    flavor: '一具了无生气的尸体，却依然颇具娱乐价值。',
-    description: ['用手枪或链枷命中逃生者时，揭露24米范围内所有其他逃生者的位置，持续3秒。'],
-  },
-  Emily: {
-    title: '艾米莉',
-    flavor: '一个瓷娃娃，它一定在想妈妈去哪儿了。',
+  'Shiny Tricycle': {
+    title: '闪亮三轮',
+    rarity: 'uncommon',
+    flavor: '三轮设计确保你在血迹斑斑的地面上也能保持平衡。',
     description: [
-      '百宝袋中可用的玩具将以固定顺序出现：',
-      '·自行车喇叭。',
-      '·手枪。',
-      '·喷火器。',
-      '·链枷。',
-      '·酸液瓶。',
+      '当自行车喇叭探测到多名逃生者时，显示所有其他逃生者的气场，持续5秒。',
+      '如果对逃生者施加折磨，下一次搜寻百宝袋时一定能找到自行车喇叭。',
     ],
   },
-  'Thornton Salt': {
-    title: '桑顿的盐',
-    flavor: '有点消化过头了，不过除此之外还能用。',
-    description: ['处于折磨效果的逃生者会受到重伤和出血状态影响。折磨效果结束后，这些状态仍将持续40秒。'],
+  'Bottle of Bleach': {
+    title: '漂白水',
+    rarity: 'common',
+    flavor: '涂抹于伤口上会引起剧烈疼痛。还能杀死99.9%的家庭细菌！',
+    description: ['折磨的衰减速度降低15%。'],
   },
-  "Victoria's Eye": {
-    title: '维多利亚的眼睛',
-    flavor: '有点消化过头了，不过除此之外还能用。',
-    description: ['用酸液瓶或喷火器命中逃生者时，揭露其气场，持续5秒。'],
+  "Allie's Scalp": {
+    title: '艾莉的头皮',
+    rarity: 'common',
+    flavor: '最恐怖的时刻从最简单的切割开始。',
+    description: ['每场对局生效一次，普通攻击击倒遭受折磨的逃生者将使其陷入恐惧。'],
   },
-  'Art Crispies': {
-    title: '阿特脆片',
-    flavor: '每盒都有惊喜！',
-    description: ['当你施加折磨效果时，你与该逃生者都获得5%~15%的急速状态，持续5秒。'],
+  "Mike's Phone": {
+    title: '麦克的手机',
+    rarity: 'common',
+    flavor: '已经稀巴烂，就像麦克的头一样。',
+    description: ['使用玩具命中未在回退的发电机会将其特殊破坏。'],
   },
-  'Explosive Gift': {
-    title: '爆炸礼物',
-    flavor: '一份让人放下戒备的欢乐礼物，绝对会引爆全场。',
-    description: ['每有一件达到最高致命性的玩具，你的恐惧范围缩小20%。'],
-  },
-  "Jonathan's Skull": {
-    title: '乔纳森的头骨',
-    flavor: '西耶娜哥哥那颗戴着眼镜的头骨。太搞笑了！',
-    description: [
-      '用玩具对逃生者造成伤害或施加折磨效果时获得1层印记，至多10层。',
-      '手动嘲讽会消耗所有印记，若至少消耗了1层，则在6秒内揭露8米范围内所有逃生者的气场，每层印记额外增加2米。',
-    ],
-  },
-  'Wacky Jacks': {
-    title: '疯狂抓子',
-    flavor: '达到每日推荐糖摄入量的110%。',
-    description: ['致命性上限降低1点，至5点。'],
-  },
-  'Duct Tape': {
-    title: '强力胶带',
-    flavor: '本是为了束缚受害者而造，但大概也能用来把东西固定住。',
-    description: ['在开启百宝袋后0.5秒内装备玩具时，该玩具的冷却时间缩短5秒。'],
-  },
-  'The Ninth Circle': {
-    title: '第九圈',
-    flavor: '残忍、诡异，血腥得令人震惊。什么样的人会对此感兴趣？',
-    description: [
-      '首次嘲讽逃生者时获得1层印记。',
-      '当出口大门通电且第九圈拥有4层印记时，百宝袋的冷却时间缩短至1秒。',
-    ],
+  'Blackened Heart': {
+    title: '黑化心脏',
+    rarity: 'common',
+    flavor: '一颗仍在跳动的心脏，黑暗，爬满了蠕虫。',
+    description: ['嘲讽一名恐惧逃生者后，下次使用玩具击倒一名逃生者时，该玩具将额外获得1点致命性。'],
   },
 };
+
+/**
+ * 显示顺序 = 游戏内附加品列表的顺序（用户按游戏截图给出）。
+ * 同一稀有度内的次序也照它，不再另行字母排序。
+ */
+const ORDER = [
+  'The Ninth Circle',
+  'Duct Tape',
+  "Jonathan's Skull",
+  'Art Crispies',
+  'Explosive Gift',
+  'Wacky Jacks',
+  'Thornton Salt',
+  'Dead Opossum',
+  'Candy Head Bowl',
+  "Victoria's Eye",
+  'Emily',
+  "Brooke's Pustule",
+  'Burnt Wings',
+  'Bloodstained Bullet',
+  "Sienna's Flesh",
+  'Shiny Tricycle',
+  'Bottle of Bleach',
+  "Allie's Scalp",
+  "Mike's Phone",
+  'Blackened Heart',
+];
 
 /* ---------- 工具 ---------- */
 const clean = (s) => s.toLowerCase().replace(/ü/g, 'v').replace(/[^a-z0-9]/g, '');
@@ -274,6 +324,10 @@ for (const a of parsed) {
     missing.push(a.name);
     continue;
   }
+  /* 稀有度以游戏内文本为准；和 wiki 表格不一致时告警，避免图标/稀有度错配 */
+  if (zh.rarity !== a.rarity) {
+    console.warn(`  ⚠ 稀有度不一致 ${a.name}：游戏内 ${zh.rarity} / wiki ${a.rarity}，采用游戏内`);
+  }
   const id = `addon:bag_of_toys:${slug(a.name)}`;
   entries.push({
     id,
@@ -281,7 +335,7 @@ for (const a of parsed) {
     ownerId: OWNER_ID,
     title: zh.title,
     titleEn: a.name,
-    rarity: a.rarity,
+    rarity: zh.rarity,
     description: zh.description,
     flavor: `“${zh.flavor}”`,
     icon: a.icon,
@@ -290,16 +344,16 @@ for (const a of parsed) {
     source: `https://deadbydaylight.wiki.gg/wiki/${encodeURIComponent(a.name.replace(/ /g, '_'))}`,
     ...keys(zh.title),
   });
-  indexEntries.push({
-    id,
-    ownerId: OWNER_ID,
-    title: zh.title,
-    rarity: a.rarity,
-    icon: a.icon,
-    ...keys(zh.title),
-    /* 与 import-dbd.mjs 的 normalizeForSearch 同一规则 */
-    text: zh.description.join('').replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '').toLowerCase(),
-  });
+}
+
+/* 双向校验：ORDER 与 ZH 必须完全一一对应，否则说明漏写/重名 */
+const zhKeys = Object.keys(ZH).sort();
+const orderKeys = [...ORDER].sort();
+if (JSON.stringify(zhKeys) !== JSON.stringify(orderKeys)) {
+  console.error('✗ ORDER 与文本表不一致');
+  console.error('  只在文本表: ' + zhKeys.filter((k) => !orderKeys.includes(k)).join(', '));
+  console.error('  只在 ORDER: ' + orderKeys.filter((k) => !zhKeys.includes(k)).join(', '));
+  process.exit(1);
 }
 
 if (missing.length) {
@@ -307,12 +361,29 @@ if (missing.length) {
   process.exit(1);
 }
 
-/* 按稀有度**降序**排：非凡 → 非常稀有 → 稀有 → 精良 → 普通。
-   这和站内其它角色的分包一致（k-01/k-07/k-20 都是 ultra 打头），
-   也是游戏内附加品列表的顺序 —— 之前写成升序，导致断魂小丑的配件整个倒过来。 */
-const order = { ultra: 0, 'very-rare': 1, rare: 2, uncommon: 3, common: 4 };
-entries.sort((x, y) => order[x.rarity] - order[y.rarity] || x.titleEn.localeCompare(y.titleEn));
-indexEntries.sort((x, y) => order[x.rarity] - order[y.rarity] || x.title.localeCompare(y.title));
+/* 显示顺序 = 游戏内附加品列表的顺序（ORDER 常量）。
+   之前按「稀有度降序 + 字母」排，虽然稀有度对了，但同档内的次序和游戏里不一样。 */
+const rank = (en) => {
+  const i = ORDER.indexOf(en);
+  return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+};
+entries.sort((x, y) => rank(x.titleEn) - rank(y.titleEn));
+
+/* 索引顺序跟 entries 一致，直接派生，避免两处排序逻辑漂移 */
+indexEntries.length = 0;
+for (const e of entries) {
+  indexEntries.push({
+    id: e.id,
+    ownerId: e.ownerId,
+    title: e.title,
+    rarity: e.rarity,
+    icon: e.icon,
+    pinyin: e.pinyin,
+    initials: e.initials,
+    /* 与 import-dbd.mjs 的 normalizeForSearch 同一规则 */
+    text: e.description.join('').replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '').toLowerCase(),
+  });
+}
 
 fs.writeFileSync(path.join(DATA, 'addons', `${OWNER_ID}.json`), JSON.stringify(entries) + '\n');
 
