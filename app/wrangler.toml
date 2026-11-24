@@ -1,12 +1,17 @@
-# Cloudflare Pages 项目配置
+# Cloudflare Workers（静态资源模式）项目配置
 #
-# 这个文件不是必需的（命令行 --project-name 也能指定），
-# 有它的好处：以后直接 `wrangler pages deploy` 就够了，不用每次带参数。
+# ⚠️ 这里踩过一个坑，别再改回去：
+#   原来写的是 Pages 专用的 `pages_build_output_dir = "dist"`。
+#    这个项目是 **Worker**（workers.dev 域名），Worker 的 `wrangler deploy`
+#    不认这个键、又没有 `main`，于是把**当前目录 app/ 整个当静态资源**传了上去 ——
+#    线上直接暴露 /src/main.tsx、/package.json、/wrangler.toml，
+#    而首页拿到的是未构建的源码 index.html（引用 /src/main.tsx），浏览器白屏。
 #
-# 部署方式选的是「直接上传」（wrangler pages deploy），不是 Git 集成：
-#   本仓库目前不是 git 仓库，而且自用站每次改完手动传一下更简单。
-# 想改成 push 自动部署，见 README「部署到 Cloudflare Pages · B 路线」。
+#    静态资源目录必须用下面的 `[assets] directory` 声明，Worker 才会只上传 Vite 产物。
 
 name = "dbd-tool"
-pages_build_output_dir = "dist"
 compatibility_date = "2025-01-01"
+
+[assets]
+# 相对本文件所在目录（app/）
+directory = "./dist"
