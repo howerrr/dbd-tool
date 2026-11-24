@@ -118,8 +118,8 @@
          按游戏那个标记的比例来（四条竖血痕 = 四个逃生者，一条斜痕 = 屠夫）：
            · 整体接近正方形（viewBox 100×100，画满约 97×89）
            · 四条竖线细而高，x 间距 21、线宽 7（间隙 14 —— 四条之间留得比较开）
-           · 中间两根比左右两根长，而且**上下都探出**：
-             左右 y 22→76（长 54），中间 y 10→92（长 82）
+           · 中间两根比左右两根长，但只长一点点（不是共用一条基线）：
+             左右 y 14→88（长 74），中间 y 10→92（长 82），两端各差 4
            · 斜线**从左上划到右下**，约 20° 的浅角度横穿四条，两端探出得比较远
              （几乎顶到画布两侧），最后才划
          viewBox 100×100：竖线 x = 19 / 40 / 61 / 82；斜线 (5,34) → (95,67)，
@@ -260,10 +260,10 @@
     <div id="splash" role="status" aria-live="polite" aria-label="正在载入">
       <div class="sp-fog"></div>
       <svg class="sp-tally" viewBox="0 0 100 100" aria-hidden="true">
-        <path d="M19 76V22" pathLength="1" />
+        <path d="M19 88V14" pathLength="1" />
         <path d="M40 92V10" pathLength="1" />
         <path d="M61 92V10" pathLength="1" />
-        <path d="M82 76V22" pathLength="1" />
+        <path d="M82 88V14" pathLength="1" />
         <path d="M5 34L95 67" pathLength="1" />
       </svg>
     </div>
