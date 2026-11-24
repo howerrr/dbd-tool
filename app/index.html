@@ -120,6 +120,7 @@
            · 四条竖线细而高，x 间距 21、线宽 7（间隙 14 —— 四条之间留得比较开）
            · 中间两根比左右两根长，但只长一点点（不是共用一条基线）：
              左右 y 10→92（长 82），中间 y 6→96（长 90），两端各差 4
+           · 笔画走向：四条竖线**从上往下**划（路径起点在顶端），斜线由左上往右下横穿
            · 斜线**从左上划到右下**，约 15° 的浅角度横穿四条，两端探得很远
              （已经超出画布左右边缘，靠 overflow: visible 显示），最后才划
          viewBox 100×100：竖线 x = 19 / 40 / 61 / 82；斜线 (-2,36.5) → (102,64.5)，
@@ -260,10 +261,10 @@
     <div id="splash" role="status" aria-live="polite" aria-label="正在载入">
       <div class="sp-fog"></div>
       <svg class="sp-tally" viewBox="0 0 100 100" aria-hidden="true">
-        <path d="M19 92V10" pathLength="1" />
-        <path d="M40 96V6" pathLength="1" />
-        <path d="M61 96V6" pathLength="1" />
-        <path d="M82 92V10" pathLength="1" />
+        <path d="M19 10V92" pathLength="1" />
+        <path d="M40 6V96" pathLength="1" />
+        <path d="M61 6V96" pathLength="1" />
+        <path d="M82 10V92" pathLength="1" />
         <path d="M-2 36.5L102 64.5" pathLength="1" />
       </svg>
     </div>
